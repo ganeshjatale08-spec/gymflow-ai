@@ -11,23 +11,23 @@ function getSupabase() {
   )
 }
 
-// ── GET — Meta Webhook Verification ──────────────────────────
+// ── GET — Verification ────────────────────────────────────────
 export async function GET(req: NextRequest) {
-  const params    = req.nextUrl.searchParams
-  const mode      = params.get('hub.mode')
-  const token     = params.get('hub.verify_token')
-  const challenge = params.get('hub.challenge')
+  const p         = req.nextUrl.searchParams
+  const mode      = p.get('hub.mode')
+  const token     = p.get('hub.verify_token')
+  const challenge = p.get('hub.challenge')
 
   if (mode === 'subscribe' && token === process.env.WHATSAPP_VERIFY_TOKEN) {
-    console.log('WhatsApp webhook verified ✓')
     return new NextResponse(challenge, { status: 200 })
   }
-
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 }
 
-// ── POST — Receive & Reply to WhatsApp Messages ───────────────
+// ── POST — Receive & Reply ────────────────────────────────────
 export async function POST(req: NextRequest) {
+  const log: string[] = []
+
   try {
     const body = await req.json()
 
@@ -40,64 +40,67 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: 'no_text_message' }, { status: 200 })
     }
 
-    const from    = message.from        // sender phone e.g. "919876543210"
-    const text    = message.text?.body  // message content
-    const contact = body.entry?.[0]?.changes?.[0]?.value?.contacts?.[0]
-    const name    = contact?.profile?.name || from
+    const from    = message.from
+    const text    = message.text?.body
+    const name    = body.entry?.[0]?.changes?.[0]?.value?.contacts?.[0]?.profile?.name || from
 
-    console.log(`📩 WhatsApp from ${name} (${from}): ${text}`)
+    log.push(`📩 From: ${from}, Text: ${text}`)
 
     const supabase = getSupabase()
 
     // 1. Get or create conversation
-    let { data: conv } = await supabase
+    const { data: existing, error: findErr } = await supabase
       .from('conversations')
       .select('*')
       .eq('phone', from)
-      .single()
+      .maybeSingle()
+
+    if (findErr) log.push(`Find conv error: ${findErr.message}`)
+
+    let conv = existing
 
     if (!conv) {
-      const { data: newConv } = await supabase
+      log.push('Creating new conversation...')
+      const { data: newConv, error: createErr } = await supabase
         .from('conversations')
-        .insert({
-          phone:        from,
-          display_name: name,
-          ai_enabled:   true,
-          status:       'open',
-          unread_count: 1,
-        })
+        .insert({ phone: from, display_name: name, ai_enabled: true, status: 'open', unread_count: 0 })
         .select()
         .single()
+
+      if (createErr) {
+        log.push(`Create conv error: ${createErr.message}`)
+        console.error('WEBHOOK ERROR:', log.join(' | '))
+        return NextResponse.json({ status: 'ok' }, { status: 200 })
+      }
       conv = newConv
     }
 
-    if (!conv) {
-      console.error('Could not create conversation')
-      return NextResponse.json({ status: 'error' }, { status: 200 })
-    }
+    log.push(`Conv ID: ${conv.id}, AI enabled: ${conv.ai_enabled}`)
 
-    // 2. Save incoming message
-    await supabase.from('messages').insert({
+    // 2. Save user message
+    const { error: msgErr } = await supabase.from('messages').insert({
       conversation_id: conv.id,
-      role:            'user',
-      content:         text,
-      channel:         'whatsapp',
+      role:    'user',
+      content: text,
+      channel: 'whatsapp',
     })
+    if (msgErr) log.push(`Save msg error: ${msgErr.message}`)
 
-    // Update last message
+    // Update conversation
     await supabase.from('conversations').update({
       last_message:    text,
       last_message_at: new Date().toISOString(),
       unread_count:    (conv.unread_count || 0) + 1,
     }).eq('id', conv.id)
 
-    // 3. Check if AI is enabled
+    // 3. Skip if AI disabled
     if (!conv.ai_enabled) {
-      console.log('AI disabled for this conversation')
+      log.push('AI disabled — skipping reply')
+      console.log('WEBHOOK:', log.join(' | '))
       return NextResponse.json({ status: 'ai_disabled' }, { status: 200 })
     }
 
-    // 4. Get conversation history (last 10 messages)
+    // 4. Get chat history
     const { data: history } = await supabase
       .from('messages')
       .select('role, content')
@@ -108,24 +111,27 @@ export async function POST(req: NextRequest) {
     const historyForAI = ((history || []).reverse() as { role: 'user' | 'assistant'; content: string }[])
       .filter(m => m.role === 'user' || m.role === 'assistant')
 
-    // 5. Get gym AI persona from settings
+    // 5. Get AI persona
     const { data: settings } = await supabase
       .from('gym_settings')
       .select('ai_persona, gym_name')
-      .single()
+      .limit(1)
+      .maybeSingle()
 
     const systemPrompt = settings?.ai_persona ||
-      `You are a helpful AI assistant for ${settings?.gym_name || 'our gym'}. Help with membership info, schedules, and pricing. Reply in the same language as the user (Hindi or English). Keep responses short and friendly.`
+      'You are a helpful gym assistant. Help with membership info, pricing, and schedules. Reply in Hindi or English based on user language. Keep responses short and friendly.'
 
     // 6. Generate AI reply
+    log.push('Generating AI reply...')
     const aiReply = await generateAIResponse(systemPrompt, historyForAI, text)
+    log.push(`AI reply: ${aiReply.slice(0, 50)}`)
 
-    // 7. Save AI reply to DB
+    // 7. Save AI reply
     await supabase.from('messages').insert({
       conversation_id: conv.id,
-      role:            'assistant',
-      content:         aiReply,
-      channel:         'whatsapp',
+      role:    'assistant',
+      content: aiReply,
+      channel: 'whatsapp',
     })
 
     await supabase.from('conversations').update({
@@ -133,15 +139,17 @@ export async function POST(req: NextRequest) {
       last_message_at: new Date().toISOString(),
     }).eq('id', conv.id)
 
-    // 8. Send reply via WhatsApp
-    await sendWhatsAppReply(from, aiReply)
+    // 8. Send WhatsApp reply
+    log.push('Sending WhatsApp reply...')
+    const waResult = await sendWhatsAppReply(from, aiReply)
+    log.push(`WA send result: ${JSON.stringify(waResult).slice(0, 100)}`)
 
-    console.log(`✅ AI replied to ${name}: ${aiReply.slice(0, 60)}...`)
-
+    console.log('WEBHOOK SUCCESS:', log.join(' | '))
     return NextResponse.json({ status: 'ok' }, { status: 200 })
 
-  } catch (err) {
-    console.error('WhatsApp webhook error:', err)
-    return NextResponse.json({ status: 'ok' }, { status: 200 }) // Always 200 to Meta
+  } catch (err: any) {
+    log.push(`FATAL ERROR: ${err.message}`)
+    console.error('WEBHOOK FATAL:', log.join(' | '))
+    return NextResponse.json({ status: 'ok' }, { status: 200 })
   }
 }
