@@ -2,6 +2,9 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+// Store employees in gym_settings.business_hours as { employees: [...], hours: {...} }
+// No schema change needed — business_hours is already JSONB
+
 function db() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL  || 'https://placeholder.supabase.co',
@@ -11,74 +14,69 @@ function db() {
 
 type Employee = { id: string; [key: string]: any }
 
-async function getAll(): Promise<Employee[]> {
-  try {
-    const { data, error } = await db()
-      .from('gym_settings')
-      .select('employees_data')
-      .limit(1)
-      .maybeSingle()
-    if (error) {
-      console.error('getAll error:', error.message)
-      return []
-    }
-    return (data?.employees_data as Employee[]) || []
-  } catch { return [] }
+async function readStore() {
+  const { data } = await db()
+    .from('gym_settings')
+    .select('id, business_hours')
+    .limit(1)
+    .maybeSingle()
+  const bh = (data?.business_hours as any) || {}
+  return { id: data?.id, hours: bh.hours || {}, employees: (bh.employees as Employee[]) || [] }
 }
 
-async function saveAll(employees: Employee[]) {
+async function writeEmployees(id: string | undefined, employees: Employee[], hours: any) {
   const supabase = db()
-  try {
-    const { data: existing, error: fe } = await supabase
-      .from('gym_settings').select('id').limit(1).maybeSingle()
-
-    if (fe) { console.error('find error:', fe.message); return }
-
-    if (existing?.id) {
-      const { error } = await supabase.from('gym_settings')
-        .update({ employees_data: employees })
-        .eq('id', existing.id)
-      if (error) console.error('update error:', error.message)
-    } else {
-      const { error } = await supabase.from('gym_settings')
-        .insert({ employees_data: employees, gym_name: 'My Gym' })
-      if (error) console.error('insert error:', error.message)
-    }
-  } catch (e) { console.error('saveAll error:', e) }
+  const payload  = { business_hours: { hours, employees } }
+  if (id) {
+    const { error } = await supabase.from('gym_settings').update(payload).eq('id', id)
+    if (error) throw error
+  } else {
+    const { error } = await supabase.from('gym_settings').insert({ ...payload, gym_name: 'My Gym' })
+    if (error) throw error
+  }
 }
 
 export async function GET() {
-  const employees = await getAll()
-  return NextResponse.json(employees)
+  try {
+    const { employees } = await readStore()
+    return NextResponse.json(employees)
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 })
+  }
 }
 
 export async function POST(req: NextRequest) {
-  const body      = await req.json()
-  const employees = await getAll()
-  const newEmp    = { ...body, id: Date.now().toString(), created_at: new Date().toISOString() }
-  const updated   = [...employees, newEmp]
-  await saveAll(updated)
-
-  // Verify it was saved
-  const verify = await getAll()
-  if (verify.length !== updated.length) {
-    return NextResponse.json({ error: 'Save failed — run ALTER TABLE SQL in Supabase' }, { status: 500 })
+  try {
+    const body  = await req.json()
+    const store = await readStore()
+    const newEmp: Employee = { ...body, id: Date.now().toString(), created_at: new Date().toISOString() }
+    await writeEmployees(store.id, [...store.employees, newEmp], store.hours)
+    return NextResponse.json(newEmp)
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 })
   }
-  return NextResponse.json(newEmp)
 }
 
 export async function PUT(req: NextRequest) {
-  const body      = await req.json()
-  const { id, ...updates } = body
-  const employees = await getAll()
-  const updated   = employees.map((e: Employee) => e.id === id ? { ...e, ...updates } : e)
-  await saveAll(updated)
-  return NextResponse.json(updated.find((e: Employee) => e.id === id))
+  try {
+    const body  = await req.json()
+    const { id, ...updates } = body
+    const store = await readStore()
+    const updated = store.employees.map((e: Employee) => e.id === id ? { ...e, ...updates } : e)
+    await writeEmployees(store.id, updated, store.hours)
+    return NextResponse.json(updated.find((e: Employee) => e.id === id))
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 })
+  }
 }
 
 export async function DELETE(req: NextRequest) {
-  const { id }    = await req.json()
-  const employees = await getAll()
-  await saveAll(employees.filter((e: Employee) => e.id !== id))
-  return NextResponse.json({ success: true })
+  try {
+    const { id } = await req.json()
+    const store  = await readStore()
+    await writeEmployees(store.id, store.employees.filter((e: Employee) => e.id !== id), store.hours)
+    return NextResponse.json({ success: true })
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 })
+  }
 }
