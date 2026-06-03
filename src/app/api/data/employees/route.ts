@@ -2,9 +2,6 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-// Store employees in gym_settings.employees_data (JSONB)
-// This bypasses the PostgREST cache issue with the employees table
-
 function db() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL  || 'https://placeholder.supabase.co',
@@ -15,27 +12,39 @@ function db() {
 type Employee = { id: string; [key: string]: any }
 
 async function getAll(): Promise<Employee[]> {
-  const { data } = await db()
-    .from('gym_settings')
-    .select('employees_data')
-    .limit(1)
-    .maybeSingle()
-  return (data?.employees_data as Employee[]) || []
+  try {
+    const { data, error } = await db()
+      .from('gym_settings')
+      .select('employees_data')
+      .limit(1)
+      .maybeSingle()
+    if (error) {
+      console.error('getAll error:', error.message)
+      return []
+    }
+    return (data?.employees_data as Employee[]) || []
+  } catch { return [] }
 }
 
 async function saveAll(employees: Employee[]) {
   const supabase = db()
-  const { data: existing } = await supabase
-    .from('gym_settings').select('id').limit(1).maybeSingle()
+  try {
+    const { data: existing, error: fe } = await supabase
+      .from('gym_settings').select('id').limit(1).maybeSingle()
 
-  if (existing?.id) {
-    await supabase.from('gym_settings')
-      .update({ employees_data: employees })
-      .eq('id', existing.id)
-  } else {
-    await supabase.from('gym_settings')
-      .insert({ employees_data: employees })
-  }
+    if (fe) { console.error('find error:', fe.message); return }
+
+    if (existing?.id) {
+      const { error } = await supabase.from('gym_settings')
+        .update({ employees_data: employees })
+        .eq('id', existing.id)
+      if (error) console.error('update error:', error.message)
+    } else {
+      const { error } = await supabase.from('gym_settings')
+        .insert({ employees_data: employees, gym_name: 'My Gym' })
+      if (error) console.error('insert error:', error.message)
+    }
+  } catch (e) { console.error('saveAll error:', e) }
 }
 
 export async function GET() {
@@ -44,15 +53,22 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json()
+  const body      = await req.json()
   const employees = await getAll()
-  const newEmp = { ...body, id: Date.now().toString(), created_at: new Date().toISOString() }
-  await saveAll([...employees, newEmp])
+  const newEmp    = { ...body, id: Date.now().toString(), created_at: new Date().toISOString() }
+  const updated   = [...employees, newEmp]
+  await saveAll(updated)
+
+  // Verify it was saved
+  const verify = await getAll()
+  if (verify.length !== updated.length) {
+    return NextResponse.json({ error: 'Save failed — run ALTER TABLE SQL in Supabase' }, { status: 500 })
+  }
   return NextResponse.json(newEmp)
 }
 
 export async function PUT(req: NextRequest) {
-  const body = await req.json()
+  const body      = await req.json()
   const { id, ...updates } = body
   const employees = await getAll()
   const updated   = employees.map((e: Employee) => e.id === id ? { ...e, ...updates } : e)
@@ -61,7 +77,7 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const { id } = await req.json()
+  const { id }    = await req.json()
   const employees = await getAll()
   await saveAll(employees.filter((e: Employee) => e.id !== id))
   return NextResponse.json({ success: true })
