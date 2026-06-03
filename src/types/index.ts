@@ -69,7 +69,7 @@ export interface Conversation {
 export interface Message {
   id: string
   conversation_id: string
-  role: import('./database.types').MessageRole
+  role: import('./database.types').MessageRole | string
   content: string
   created_at: string
 }

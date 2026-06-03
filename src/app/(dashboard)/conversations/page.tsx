@@ -43,14 +43,18 @@ export default function ConversationsPage() {
   // Load messages when conversation changes
   useEffect(() => {
     if (!activeConversationId) return
-
     markRead(activeConversationId)
 
-    fetch(`/api/data/messages?conversation_id=${activeConversationId}`)
-      .then(r => r.json())
-      .then(data => {
-        if (Array.isArray(data)) setMessages(activeConversationId, data as Message[])
-      })
+    const loadMsgs = () => {
+      fetch(`/api/data/messages?conversation_id=${activeConversationId}`)
+        .then(r => r.json())
+        .then(data => { if (Array.isArray(data)) setMessages(activeConversationId, data as Message[]) })
+    }
+
+    loadMsgs()
+    // Poll every 5s for new incoming WhatsApp messages
+    const interval = setInterval(loadMsgs, 5000)
+    return () => clearInterval(interval)
   }, [activeConversationId])
 
   // Auto-scroll
@@ -80,6 +84,16 @@ export default function ConversationsPage() {
     setInput('')
     setSending(true)
 
+    // Optimistic update — show message immediately
+    const tempMsg: Message = {
+      id: 'temp_' + Date.now(),
+      conversation_id: activeConversationId,
+      role: 'assistant',
+      content,
+      created_at: new Date().toISOString(),
+    }
+    setMessages(activeConversationId, [...activeMessages, tempMsg])
+
     try {
       if (sendAsAI) {
         await fetch('/api/ai/chat', {
@@ -103,6 +117,14 @@ export default function ConversationsPage() {
           }),
         })
       }
+
+      // Reload messages from DB to get real IDs
+      const res  = await fetch(`/api/data/messages?conversation_id=${activeConversationId}`)
+      const msgs = await res.json()
+      if (Array.isArray(msgs)) setMessages(activeConversationId, msgs as Message[])
+
+    } catch (err) {
+      console.error('Send error:', err)
     } finally {
       setSending(false)
     }
