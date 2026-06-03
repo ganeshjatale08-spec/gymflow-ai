@@ -246,6 +246,14 @@ export default function EmployeesPage() {
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing]     = useState<Employee | null>(null)
   const [selected, setSelected]   = useState<Employee | null>(null)
+  const [loading, setLoading]     = useState(true)
+
+  useEffect(() => {
+    fetch('/api/data/employees')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setEmployees(data) })
+      .finally(() => setLoading(false))
+  }, [])
 
   const filtered = employees.filter(e => {
     const matchSearch = !search || e.name.toLowerCase().includes(search.toLowerCase()) || e.phone.includes(search)
@@ -256,18 +264,23 @@ export default function EmployeesPage() {
   function openAdd()           { setEditing(null); setShowModal(true) }
   function openEdit(e: Employee) { setEditing(e);    setShowModal(true) }
 
-  function handleSave(form: Omit<Employee, 'id'>) {
+  async function handleSave(form: Omit<Employee, 'id'>) {
     if (editing) {
-      setEmployees(prev => prev.map(e => e.id === editing.id ? { ...form, id: editing.id } : e))
+      const res  = await fetch('/api/data/employees', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editing.id, ...form }) })
+      const saved = await res.json()
+      if (saved.id) setEmployees(prev => prev.map(e => e.id === editing.id ? saved : e))
       toast.success('Employee updated')
     } else {
-      setEmployees(prev => [{ ...form, id: Date.now().toString() }, ...prev])
+      const res  = await fetch('/api/data/employees', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
+      const saved = await res.json()
+      if (saved.id) setEmployees(prev => [saved, ...prev])
       toast.success('Employee added')
     }
     setEditing(null)
   }
 
-  function deleteEmployee(id: string) {
+  async function deleteEmployee(id: string) {
+    await fetch('/api/data/employees', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
     setEmployees(prev => prev.filter(e => e.id !== id))
     if (selected?.id === id) setSelected(null)
     toast.success('Employee removed')
