@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Zap, Plus, Play, Pause, ArrowRight, Bell, MessageSquare,
@@ -40,7 +40,7 @@ const VARIABLES = [
   { label: '{{phone}}',      desc: "Member's phone"      },
 ]
 
-const MEMBER_COUNT = 0
+const MEMBER_COUNT = 0 // replaced by state below
 const LEAD_COUNT   = 0
 
 // ── Templates ─────────────────────────────────────────
@@ -62,6 +62,13 @@ const DEFAULT_TEMPLATES: Template[] = [
 // ── Page ─────────────────────────────────────────────
 export default function AutomationsPage() {
   const [automations, setAutomations] = useState(mockAutomations)
+  const [memberCount, setMemberCount] = useState(0)
+  const [leadCount,   setLeadCount]   = useState(0)
+
+  useEffect(() => {
+    fetch('/api/data/members').then(r=>r.json()).then(d=>{ if(Array.isArray(d)) setMemberCount(d.length) })
+    fetch('/api/data/leads').then(r=>r.json()).then(d=>{ if(Array.isArray(d)) setLeadCount(d.length) })
+  }, [])
 
   // Template state
   const [templates, setTemplates]       = useState<Template[]>(DEFAULT_TEMPLATES)
@@ -130,7 +137,7 @@ export default function AutomationsPage() {
     setMessage(prev => prev + v)
   }
 
-  const recipientCount = audience === 'members' ? MEMBER_COUNT : MEMBER_COUNT + LEAD_COUNT
+  const recipientCount = audience === 'members' ? memberCount : memberCount + leadCount
 
   const previewText = message
     .replace(/{{name}}/g,     'Rahul Kumar')
@@ -215,7 +222,7 @@ export default function AutomationsPage() {
                   key: 'members',
                   label: 'Gym Members Only',
                   sub: 'Active members of your gym',
-                  count: MEMBER_COUNT,
+                  count: memberCount,
                   icon: Users,
                   color: 'blue',
                 },
@@ -223,7 +230,7 @@ export default function AutomationsPage() {
                   key: 'all',
                   label: 'All Contacts',
                   sub: 'Members + all leads in database',
-                  count: MEMBER_COUNT + LEAD_COUNT,
+                  count: memberCount + leadCount,
                   icon: MessageSquare,
                   color: 'green',
                 },
