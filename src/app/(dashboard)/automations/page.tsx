@@ -13,6 +13,7 @@ import { fadeUp, staggerContainer } from '@/lib/constants'
 import { GlowCard } from '@/components/shared/GlowCard'
 import { StatusDot } from '@/components/shared/StatusDot'
 import { cn } from '@/lib/utils'
+import brand from '@/lib/brand.config'
 
 // ── Automations data ──────────────────────────────────
 const triggerIcons: Record<string, React.ElementType> = {
@@ -136,8 +137,8 @@ export default function AutomationsPage() {
     .replace(/{{plan}}/g,     'Growth')
     .replace(/{{amount}}/g,   '₹3,999')
     .replace(/{{expiry}}/g,   '30 Jun 2026')
-    .replace(/{{gym_name}}/g, 'Iron Pulse Gym')
-    .replace(/{{phone}}/g,    '+91 98765 43210')
+    .replace(/{{gym_name}}/g, brand.name)
+    .replace(/{{phone}}/g,    brand.phone)
 
   async function handleSend() {
     if (!message.trim()) { toast.error('Please write a message first'); return }

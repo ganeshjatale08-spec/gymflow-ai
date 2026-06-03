@@ -49,11 +49,13 @@ export default function PaymentsPage() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [payments, setPayments]     = useState<Payment[]>([])
   const [invoicePayment, setInvoicePayment] = useState<Payment | null>(null)
+  const [loadingPay, setLoadingPay] = useState(true)
 
   useEffect(() => {
     fetch('/api/data/payments')
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setPayments(data) })
+      .finally(() => setLoadingPay(false))
   }, [])
   const [showExport, setShowExport] = useState(false)
   const [editingId, setEditingId]   = useState<string | null>(null)
@@ -166,7 +168,9 @@ export default function PaymentsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {loadingPay ? (
+                <tr><td colSpan={8} className="text-center py-16 text-text-muted text-sm">Loading...</td></tr>
+              ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="text-center py-16">
                     <div className="flex flex-col items-center gap-3 text-text-muted">

@@ -115,7 +115,9 @@ export default function MembersPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {loading ? (
+                <tr><td colSpan={8} className="text-center py-16 text-text-muted text-sm">Loading...</td></tr>
+              ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="text-center py-16">
                     <div className="flex flex-col items-center gap-3 text-text-muted">

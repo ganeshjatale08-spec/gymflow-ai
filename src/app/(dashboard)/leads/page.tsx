@@ -34,11 +34,13 @@ export default function LeadsPage() {
   const [leads, setLeads]               = useState<ExtLead[]>([])
   const [viewMode, setViewMode]         = useState<'table' | 'kanban'>('table')
   const [selectedLead, setSelectedLead] = useState<ExtLead | null>(null)
+  const [loading, setLoading]           = useState(true)
 
   useEffect(() => {
     fetch('/api/data/leads')
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setLeads(data) })
+      .finally(() => setLoading(false))
   }, [])
 
   const statusFilters = ['all', 'new', 'contacted', 'qualified', 'converted', 'lost']
@@ -162,7 +164,9 @@ export default function LeadsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {loading ? (
+                <tr><td colSpan={7} className="text-center py-16 text-text-muted text-sm">Loading...</td></tr>
+              ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-16">
                     <div className="flex flex-col items-center gap-3 text-text-muted">

@@ -7,7 +7,7 @@ import { Modal } from '@/components/shared/Modal'
 interface AddMemberModalProps {
   open: boolean
   onClose: () => void
-  onAdd?: (member: { name: string; phone: string; plan_name: string; plan_amount: number; plan_end: string; trainer: string }) => void
+  onAdd?: (member: { name: string; phone: string; plan_name: string; plan_amount: number; plan_end: string; trainer: string }) => void | Promise<void>
 }
 
 const plans = [

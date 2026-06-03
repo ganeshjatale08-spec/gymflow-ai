@@ -92,11 +92,15 @@ export default function ConversationsPage() {
           }),
         })
       } else {
-        await supabase.from('messages').insert({
-          conversation_id: activeConversationId,
-          role: 'assistant',
-          content,
-          channel: 'whatsapp',
+        await fetch('/api/data/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conversation_id: activeConversationId,
+            role: 'assistant',
+            content,
+            channel: 'whatsapp',
+          }),
         })
       }
     } finally {
