@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Users, Plus, Search, Calendar, Phone } from 'lucide-react'
 import { fadeUp, staggerContainer } from '@/lib/constants'
@@ -31,6 +31,14 @@ export default function MembersPage() {
   const [members, setMembers]           = useState<MemberRow[]>([])
   const [selectedMember, setSelectedMember] = useState<MemberRow | null>(null)
   const [checkedIds, setCheckedIds]     = useState<Set<string>>(new Set())
+  const [loading, setLoading]           = useState(true)
+
+  useEffect(() => {
+    fetch('/api/data/members')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setMembers(data) })
+      .finally(() => setLoading(false))
+  }, [])
 
   const filtered = members.filter(m => {
     const matchSearch = !search || m.name.toLowerCase().includes(search.toLowerCase()) || m.phone.includes(search)
@@ -174,18 +182,22 @@ export default function MembersPage() {
     </motion.div>
 
     <AddMemberModal open={showAddModal} onClose={() => setShowAddModal(false)}
-      onAdd={newMember => {
-        setMembers(prev => [{
-          id: String(Date.now()), name: newMember.name, phone: newMember.phone,
+      onAdd={async newMember => {
+        const body = {
+          name: newMember.name, phone: newMember.phone,
           plan_name: newMember.plan_name, plan_amount: newMember.plan_amount,
           plan_end: newMember.plan_end, status: 'active', attendance_count: 0,
           trainer: newMember.trainer !== 'No Trainer' ? newMember.trainer : null,
-          avatar_url: null, joining_date: new Date().toISOString().split('T')[0],
-        }, ...prev])
+          joining_date: new Date().toISOString().split('T')[0],
+        }
+        const res  = await fetch('/api/data/members', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        const saved = await res.json()
+        if (saved.id) setMembers(prev => [{ ...saved, avatar_url: null }, ...prev])
       }} />
 
     <MemberProfileDrawer member={selectedMember} onClose={() => setSelectedMember(null)}
-      onUpdate={updated => {
+      onUpdate={async updated => {
+        await fetch('/api/data/members', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updated) })
         setMembers(prev => prev.map(m => m.id === updated.id ? { ...m, ...updated } : m))
         setSelectedMember(null)
       }} />

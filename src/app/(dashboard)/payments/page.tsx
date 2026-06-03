@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { CreditCard, Plus, Search, CheckCircle, Clock, XCircle, IndianRupee, Download, ChevronDown, Receipt, Pencil, Save, X, FileText, FileSpreadsheet } from 'lucide-react'
 import { toast } from 'sonner'
@@ -49,6 +49,12 @@ export default function PaymentsPage() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [payments, setPayments]     = useState<Payment[]>([])
   const [invoicePayment, setInvoicePayment] = useState<Payment | null>(null)
+
+  useEffect(() => {
+    fetch('/api/data/payments')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setPayments(data) })
+  }, [])
   const [showExport, setShowExport] = useState(false)
   const [editingId, setEditingId]   = useState<string | null>(null)
   const [editForm, setEditForm]     = useState<Partial<Payment>>({})
@@ -246,14 +252,11 @@ export default function PaymentsPage() {
     </motion.div>
 
     <RecordPaymentModal open={showAddModal} onClose={() => setShowAddModal(false)}
-      onAdd={newPayment => {
-        setPayments(prev => [{
-          id: String(Date.now()), member: newPayment.member, amount: newPayment.amount,
-          status: 'completed', method: newPayment.method, upi_ref: newPayment.utr||null,
-          cheque_no: newPayment.cheque_no||null, description: newPayment.description,
-          due_date: newPayment.due_date||new Date().toISOString().split('T')[0],
-          paid_at: new Date().toISOString().split('T')[0],
-        }, ...prev])
+      onAdd={async newPayment => {
+        const body = { member_name: newPayment.member, amount: newPayment.amount, status: 'completed', method: newPayment.method, utr_ref: newPayment.utr||null, cheque_no: newPayment.cheque_no||null, description: newPayment.description, due_date: newPayment.due_date||new Date().toISOString().split('T')[0], paid_at: new Date().toISOString().split('T')[0] }
+        const res   = await fetch('/api/data/payments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        const saved = await res.json()
+        if (saved.id) setPayments(prev => [{ id: saved.id, member: saved.member_name, amount: saved.amount, status: saved.status, method: saved.method, upi_ref: saved.utr_ref, description: saved.description || '', due_date: saved.due_date, paid_at: saved.paid_at }, ...prev])
       }} />
 
     <InvoiceModal payment={invoicePayment} onClose={() => setInvoicePayment(null)} />

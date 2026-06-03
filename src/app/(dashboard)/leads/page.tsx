@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Search, Plus, Phone, Mail, MessageSquare, Calendar, LayoutGrid, List, Target } from 'lucide-react'
 import { fadeUp, staggerContainer } from '@/lib/constants'
@@ -34,6 +34,12 @@ export default function LeadsPage() {
   const [leads, setLeads]               = useState<ExtLead[]>([])
   const [viewMode, setViewMode]         = useState<'table' | 'kanban'>('table')
   const [selectedLead, setSelectedLead] = useState<ExtLead | null>(null)
+
+  useEffect(() => {
+    fetch('/api/data/leads')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setLeads(data) })
+  }, [])
 
   const statusFilters = ['all', 'new', 'contacted', 'qualified', 'converted', 'lost']
 
@@ -216,18 +222,16 @@ export default function LeadsPage() {
     </motion.div>
 
     <AddLeadModal open={showAddModal} onClose={() => setShowAddModal(false)}
-      onAdd={newLead => {
-        setLeads(prev => [{
-          id: String(Date.now()), name: newLead.name || newLead.phone, phone: newLead.phone,
-          email: newLead.email || null, status: newLead.status, score: 10,
-          source: newLead.source, interest: newLead.interest || null,
-          last_message: null, plan_interest: null, trial_date: null, assigned_agent: null,
-          created_at: new Date().toISOString(),
-        }, ...prev])
+      onAdd={async newLead => {
+        const body = { name: newLead.name || newLead.phone, phone: newLead.phone, email: newLead.email || null, status: newLead.status, score: 10, source: newLead.source, interest: newLead.interest || null, plan_interest: null, trial_date: null, assigned_agent: null }
+        const res  = await fetch('/api/data/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        const saved = await res.json()
+        if (saved.id) setLeads(prev => [saved, ...prev])
       }} />
 
     <LeadDetailDrawer lead={selectedLead} onClose={() => setSelectedLead(null)}
-      onUpdate={updated => {
+      onUpdate={async updated => {
+        await fetch('/api/data/leads', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updated) })
         setLeads(prev => prev.map(l => l.id === updated.id ? { ...l, ...updated } : l))
         setSelectedLead(null)
       }} />
