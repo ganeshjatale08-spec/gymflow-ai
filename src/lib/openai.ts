@@ -1,14 +1,21 @@
 import OpenAI from 'openai'
 
-export const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-})
+function getOpenAI() {
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY || 'placeholder',
+  })
+}
 
 export async function generateAIResponse(
   systemPrompt: string,
   conversationHistory: { role: 'user' | 'assistant'; content: string }[],
   userMessage: string
 ): Promise<string> {
+  if (!process.env.OPENAI_API_KEY) {
+    return 'AI not configured. Please add OPENAI_API_KEY to environment variables.'
+  }
+
+  const openai = getOpenAI()
   const response = await openai.chat.completions.create({
     model: process.env.OPENAI_MODEL || 'gpt-4o',
     messages: [
