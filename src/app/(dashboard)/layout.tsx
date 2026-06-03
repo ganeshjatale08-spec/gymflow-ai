@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useEffect } from 'react'
 import { useUIStore } from '@/stores/uiStore'
 import { Sidebar } from '@/components/dashboard/Sidebar'
