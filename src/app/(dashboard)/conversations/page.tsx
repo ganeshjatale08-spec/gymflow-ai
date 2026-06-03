@@ -31,7 +31,7 @@ export default function ConversationsPage() {
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
-  const [sendAsAI, setSendAsAI] = useState(true)
+  const [sendAsAI] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useConversations()
@@ -324,17 +324,6 @@ export default function ConversationsPage() {
 
             {/* Input */}
             <div className="border-t border-border p-3 bg-surface flex-shrink-0">
-              <div className="flex items-center gap-2 mb-2">
-                <label className="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={sendAsAI}
-                    onChange={(e) => setSendAsAI(e.target.checked)}
-                    className="w-3 h-3 accent-blue"
-                  />
-                  <span className="text-xs text-text-muted">Generate with AI</span>
-                </label>
-              </div>
               <div className="flex items-end gap-2">
                 <textarea
                   value={input}
