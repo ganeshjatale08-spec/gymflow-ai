@@ -11,23 +11,14 @@ function db() {
 
 export async function GET() {
   const { data, error } = await db()
-    .from('payments')
-    .select('*')
-    .order('created_at', { ascending: false })
+    .from('payments').select('*').order('created_at', { ascending: false })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  // Normalize: map member_name → member for frontend
-  const normalized = (data || []).map((p: any) => ({
-    ...p,
-    member: p.member_name || p.member || '',
-  }))
+  const normalized = (data || []).map((p: any) => ({ ...p, member: p.member_name || p.member || '' }))
   return NextResponse.json(normalized)
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-
-  // Normalize: frontend sends 'member', DB has 'member_name'
   const payload = {
     member_name:  body.member || body.member_name || '',
     amount:       body.amount,
@@ -39,28 +30,24 @@ export async function POST(req: NextRequest) {
     due_date:     body.due_date || null,
     paid_at:      body.paid_at || null,
   }
-
-  const { data, error } = await db()
-    .from('payments')
-    .insert(payload)
-    .select()
-    .single()
-
+  const { data, error } = await db().from('payments').insert(payload).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ...data, member: data.member_name })
 }
 
 export async function PUT(req: NextRequest) {
-  const body    = await req.json()
+  const body = await req.json()
   const { id, member, ...rest } = body
-
   const { data, error } = await db()
-    .from('payments')
-    .update({ ...rest, member_name: member || rest.member_name })
-    .eq('id', id)
-    .select()
-    .single()
-
+    .from('payments').update({ ...rest, member_name: member || rest.member_name })
+    .eq('id', id).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ...data, member: data.member_name })
+}
+
+export async function DELETE(req: NextRequest) {
+  const { id } = await req.json()
+  const { error } = await db().from('payments').delete().eq('id', id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ success: true })
 }
