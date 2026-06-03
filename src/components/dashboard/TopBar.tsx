@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Bell, Search, RefreshCw, CheckCircle, PauseCircle, Menu, Users, Target, CreditCard, X } from 'lucide-react'
+import { Bell, Search, RefreshCw, CheckCircle, PauseCircle, Menu, Users, Target, CreditCard, X, HelpCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useUIStore } from '@/stores/uiStore'
 import { StatusDot } from '@/components/shared/StatusDot'
 import { NotificationsPanel } from '@/components/dashboard/NotificationsPanel'
+import { HelpPanel } from '@/components/dashboard/HelpPanel'
 import { cn } from '@/lib/utils'
 import { AnimatePresence, motion } from 'framer-motion'
 
@@ -41,6 +42,7 @@ export function TopBar() {
   const [query, setQuery]         = useState('')
   const [focused, setFocused]     = useState(false)
   const [notifsOpen, setNotifsOpen] = useState(false)
+  const [helpOpen, setHelpOpen]   = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const router   = useRouter()
 
@@ -161,6 +163,12 @@ export function TopBar() {
             <span className="hidden sm:block">AI {aiGlobalStatus === 'active' ? 'Active' : 'Paused'}</span>
           </button>
 
+          {/* Help */}
+          <button onClick={() => setHelpOpen(true)} title="Help & Guide"
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface2 transition-colors">
+            <HelpCircle className="w-4 h-4 text-text-secondary" />
+          </button>
+
           <button onClick={() => setNotifsOpen(true)}
             className="relative w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface2 transition-colors">
             <Bell className="w-4 h-4 text-text-secondary" />
@@ -174,6 +182,7 @@ export function TopBar() {
       </div>
 
       <NotificationsPanel open={notifsOpen} onClose={() => setNotifsOpen(false)} onUnreadChange={setNotifications} />
+      <HelpPanel open={helpOpen} onClose={() => setHelpOpen(false)} />
     </>
   )
 }
