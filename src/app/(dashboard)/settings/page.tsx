@@ -112,9 +112,9 @@ export default function SettingsPage() {
   useEffect(() => setMounted(true), [])
 
   // Gym profile
-  const [gymName, setGymName] = useState(storeGymName || brand.name)
-  const [city, setCity]       = useState(brand.city)
-  const [phone, setPhone]     = useState(brand.phone)
+  const [gymName, setGymName] = useState(storeGymName)
+  const [city, setCity]       = useState('')
+  const [phone, setPhone]     = useState('')
   const [logoPreview, setLogoPreview] = useState<string | null>(gymLogo)
   const logoRef = useRef<HTMLInputElement>(null)
 

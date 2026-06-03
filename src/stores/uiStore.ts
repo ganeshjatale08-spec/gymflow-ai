@@ -27,21 +27,35 @@ function applyTheme(theme: ThemeMode) {
   localStorage.setItem('gym-theme', theme)
 }
 
+// Load persisted values from localStorage
+const persistedName = typeof window !== 'undefined' ? (localStorage.getItem('gym_name') || brand.name) : brand.name
+const persistedLogo = typeof window !== 'undefined' ? localStorage.getItem('gym_logo') || null : null
+const persistedTheme = typeof window !== 'undefined' ? (localStorage.getItem('gym-theme') as 'dark' | 'light' || 'dark') : 'dark'
+
 export const useUIStore = create<UIState>((set) => ({
   sidebarOpen: true,
   activeNotifications: 3,
   aiGlobalStatus: 'active',
   syncStatus: 'synced',
-  gymName: brand.name,
-  gymLogo: null,
-  theme: 'dark',
+  gymName: persistedName,
+  gymLogo: persistedLogo,
+  theme: persistedTheme,
 
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setAIStatus: (aiGlobalStatus) => set({ aiGlobalStatus }),
   setSyncStatus: (syncStatus) => set({ syncStatus }),
   setNotifications: (count) => set({ activeNotifications: count }),
-  setGymName: (gymName) => set({ gymName }),
-  setGymLogo: (gymLogo) => set({ gymLogo }),
+  setGymName: (gymName) => {
+    if (typeof window !== 'undefined') localStorage.setItem('gym_name', gymName)
+    set({ gymName })
+  },
+  setGymLogo: (gymLogo) => {
+    if (typeof window !== 'undefined') {
+      if (gymLogo) localStorage.setItem('gym_logo', gymLogo)
+      else localStorage.removeItem('gym_logo')
+    }
+    set({ gymLogo })
+  },
   setTheme: (theme) => {
     applyTheme(theme)
     set({ theme })
