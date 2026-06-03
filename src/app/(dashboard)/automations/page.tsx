@@ -24,42 +24,10 @@ const triggerIcons: Record<string, React.ElementType> = {
   inactivity:         Bell,
 }
 
-const mockAutomations = [
-  {
-    id: '1', name: 'New Lead Welcome', trigger_type: 'new_lead',
-    trigger_label: 'When a new lead is captured', is_active: true, run_count: 247,
-    actions: [
-      { label: 'Send welcome message in Hindi/English' },
-      { label: 'Wait 2 hours' },
-      { label: 'Send membership pricing details' },
-    ],
-  },
-  {
-    id: '2', name: 'Membership Renewal Reminder', trigger_type: 'membership_expiring',
-    trigger_label: '7 days before membership expires', is_active: true, run_count: 89,
-    actions: [
-      { label: 'Send renewal reminder with offer' },
-      { label: 'Wait 3 days' },
-      { label: 'Send final reminder with urgency' },
-    ],
-  },
-  {
-    id: '3', name: 'Payment Due Reminder', trigger_type: 'payment_due',
-    trigger_label: 'When payment is 2 days overdue', is_active: true, run_count: 134,
-    actions: [
-      { label: 'Send payment reminder with UPI link' },
-      { label: 'Update member status to "overdue"' },
-    ],
-  },
-  {
-    id: '4', name: 'Inactive Member Re-engagement', trigger_type: 'inactivity',
-    trigger_label: "When member hasn't visited in 14 days", is_active: false, run_count: 23,
-    actions: [
-      { label: 'Send motivational message with fitness tip' },
-      { label: 'Assign trainer for check-in call' },
-    ],
-  },
-]
+const mockAutomations: {
+  id: string; name: string; trigger_type: string; trigger_label: string;
+  is_active: boolean; run_count: number; actions: { label: string }[]
+}[] = []
 
 // ── Personalization variables ─────────────────────────
 const VARIABLES = [
@@ -71,9 +39,8 @@ const VARIABLES = [
   { label: '{{phone}}',      desc: "Member's phone"      },
 ]
 
-// Mock counts
-const MEMBER_COUNT = 847
-const LEAD_COUNT   = 247
+const MEMBER_COUNT = 0
+const LEAD_COUNT   = 0
 
 // ── Templates ─────────────────────────────────────────
 type Template = { id: string; name: string; body: string }
@@ -530,6 +497,13 @@ export default function AutomationsPage() {
       {/* ── Automations List ── */}
       <motion.div variants={fadeUp} className="space-y-3">
         <h2 className="text-sm font-semibold text-text-primary">Workflow Automations</h2>
+        {automations.length === 0 && (
+          <div className="bg-surface border border-border rounded-xl p-12 text-center">
+            <Zap className="w-10 h-10 text-text-muted opacity-20 mx-auto mb-3" />
+            <p className="text-sm text-text-muted">No automations yet</p>
+            <p className="text-xs text-text-muted mt-1">Click "New Automation" to create your first workflow</p>
+          </div>
+        )}
         {automations.map((auto) => {
           const TriggerIcon = triggerIcons[auto.trigger_type] || Zap
           return (
