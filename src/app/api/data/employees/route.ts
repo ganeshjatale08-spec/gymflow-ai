@@ -10,41 +10,29 @@ function db() {
 }
 
 export async function GET() {
-  const { data, error } = await db()
-    .from('employees')
-    .select('*')
-    .order('created_at', { ascending: false })
+  const { data, error } = await db().rpc('get_employees')
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data || [])
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { data, error } = await db()
-    .from('employees')
-    .insert(body)
-    .select()
-    .single()
+  const { data, error } = await db().rpc('insert_employee', { payload: body })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }
 
 export async function PUT(req: NextRequest) {
   const body = await req.json()
-  const { id, ...updates } = body
-  const { data, error } = await db()
-    .from('employees')
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single()
+  const { id, ...rest } = body
+  const { data, error } = await db().rpc('update_employee', { emp_id: id, payload: rest })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }
 
 export async function DELETE(req: NextRequest) {
   const { id } = await req.json()
-  const { error } = await db().from('employees').delete().eq('id', id)
+  const { data, error } = await db().rpc('delete_employee', { emp_id: id })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ success: true })
+  return NextResponse.json(data)
 }
