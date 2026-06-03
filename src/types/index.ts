@@ -56,7 +56,7 @@ export interface Trainer {
 
 export interface Conversation {
   id: string
-  gym_id: string
+  gym_id?: string | null
   phone: string
   display_name: string | null
   last_message: string | null

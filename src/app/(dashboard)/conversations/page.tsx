@@ -98,7 +98,6 @@ export default function ConversationsPage() {
       } else {
         await supabase.from('messages').insert({
           conversation_id: activeConversationId,
-          gym_id: activeConversation?.gym_id as string,
           role: 'assistant',
           content,
           channel: 'whatsapp',
