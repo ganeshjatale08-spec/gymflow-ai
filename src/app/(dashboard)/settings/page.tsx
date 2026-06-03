@@ -368,34 +368,27 @@ export default function SettingsPage() {
             {/* ── AI PERSONA ── */}
             {activeTab === 'ai' && (
               <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { label:'😊 Friendly', prompt:`You are Asha, a friendly AI assistant for ${gymName}. Always greet with "Namaste! 🙏". Use conversational tone. Reply in Hindi or English based on user.` },
-                    { label:'💼 Professional', prompt:`You are the AI assistant for ${gymName}. Be professional and concise. Provide accurate membership info. Reply in Hindi or English as needed.` },
-                    { label:'💪 Motivational', prompt:`You are Coach AI at ${gymName}! Energetic and passionate about fitness! Use emojis 💪🏋️🔥. Hype up members. Reply in Hindi or English.` },
-                    { label:'🎯 Sales', prompt:`You are a sales assistant for ${gymName}. Convert leads to members. Highlight benefits, create urgency, offer free trial. Be persuasive but friendly.` },
-                  ].map(p => (
-                    <button key={p.label} onClick={() => setAiPersona(p.prompt)}
-                      className="p-3 bg-surface2 border border-border rounded-xl text-xs font-medium text-text-secondary hover:border-blue/30 hover:bg-blue/5 transition-all text-left">{p.label}</button>
-                  ))}
-                </div>
+                <p className="text-sm text-text-secondary">
+                  Yeh prompt AI ko batata hai kaise baat karni hai, kya jaankari deni hai, aur kaunsi language mein reply karna hai.
+                </p>
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className={lCls.replace('mb-1.5','')}>System Prompt</label>
-                    <span className="text-xs text-text-muted">{aiPersona.length} chars</span>
+                    <span className="text-xs text-text-muted">{aiPersona.length} characters</span>
                   </div>
-                  <textarea value={aiPersona} onChange={e=>setAiPersona(e.target.value)} rows={6} className={cn(iCls,'resize-none leading-relaxed')} />
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {['{{name}}','{{plan}}','{{amount}}','{{expiry}}','{{gym_name}}'].map(v=>(
-                      <button key={v} onClick={()=>setAiPersona(p=>p+v)} className="text-[10px] font-mono px-1.5 py-0.5 bg-blue/10 border border-blue/20 text-blue-soft rounded hover:bg-blue/20 transition-colors">{v}</button>
-                    ))}
-                  </div>
+                  <textarea
+                    value={aiPersona}
+                    onChange={e => setAiPersona(e.target.value)}
+                    rows={10}
+                    placeholder="AI ko batao kaise baat karni hai..."
+                    className={cn(iCls, 'resize-none leading-relaxed font-mono text-xs')}
+                  />
                 </div>
-                <button onClick={async()=>{
-                  await fetch('/api/data/gym-settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ai_persona:aiPersona})})
+                <button onClick={async () => {
+                  await fetch('/api/data/gym-settings', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ai_persona: aiPersona }) })
                   toast.success('AI Persona saved')
                 }} className="flex items-center gap-2 bg-blue hover:bg-blue-muted text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-                  <Save className="w-3.5 h-3.5" />Save Persona
+                  <Save className="w-3.5 h-3.5" />Save
                 </button>
               </div>
             )}
