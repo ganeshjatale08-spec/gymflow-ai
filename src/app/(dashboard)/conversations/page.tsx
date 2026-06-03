@@ -46,14 +46,10 @@ export default function ConversationsPage() {
 
     markRead(activeConversationId)
 
-    supabase
-      .from('messages')
-      .select('*')
-      .eq('conversation_id', activeConversationId)
-      .order('created_at', { ascending: true })
-      .limit(50)
-      .then(({ data }) => {
-        if (data) setMessages(activeConversationId, data as Message[])
+    fetch(`/api/data/messages?conversation_id=${activeConversationId}`)
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) setMessages(activeConversationId, data as Message[])
       })
   }, [activeConversationId])
 
