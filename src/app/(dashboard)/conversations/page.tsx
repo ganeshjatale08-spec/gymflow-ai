@@ -106,16 +106,19 @@ export default function ConversationsPage() {
           }),
         })
       } else {
-        await fetch('/api/data/messages', {
+        // Manual send — save to DB AND send via WhatsApp
+        const res = await fetch('/api/send-whatsapp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            conversation_id: activeConversationId,
-            role: 'assistant',
-            content,
-            channel: 'whatsapp',
+            conversationId: activeConversationId,
+            message: content,
           }),
         })
+        const data = await res.json()
+        if (!data.success && data.error) {
+          console.error('WhatsApp send failed:', data.error)
+        }
       }
 
       // Reload messages from DB to get real IDs
