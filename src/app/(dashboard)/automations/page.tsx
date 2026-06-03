@@ -143,11 +143,25 @@ export default function AutomationsPage() {
   async function handleSend() {
     if (!message.trim()) { toast.error('Please write a message first'); return }
     setSending(true)
-    await new Promise(r => setTimeout(r, 1800))
-    setSending(false)
-    setSent(true)
-    toast.success(`Message sent to ${recipientCount.toLocaleString('en-IN')} recipients via WhatsApp`)
-    setTimeout(() => setSent(false), 4000)
+    try {
+      const res  = await fetch('/api/bulk-send', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ message, audience }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error || 'Send failed')
+        return
+      }
+      setSent(true)
+      toast.success(`✅ Message sent to ${data.sent} recipients via WhatsApp${data.failed > 0 ? ` (${data.failed} failed)` : ''}`)
+      setTimeout(() => setSent(false), 4000)
+    } catch (err) {
+      toast.error('Network error — try again')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
