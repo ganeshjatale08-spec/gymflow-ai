@@ -163,10 +163,10 @@ export default function AutomationsPage() {
       {/* Stats */}
       <motion.div variants={fadeUp} className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Active Automations', value: automations.filter(a => a.is_active).length, color: 'text-green'      },
-          { label: 'Total Runs',         value: automations.reduce((s, a) => s + a.run_count, 0), color: 'text-blue-soft' },
-          { label: 'Messages Sent',      value: '1,247',  color: 'text-text-primary' },
-          { label: 'Conversions',        value: '34',     color: 'text-orange'       },
+          { label: 'Active Automations', value: automations.filter(a => a.is_active).length,        color: 'text-green'        },
+          { label: 'Total Runs',         value: automations.reduce((s, a) => s + a.run_count, 0), color: 'text-blue-soft'    },
+          { label: 'Messages Sent',      value: 0,  color: 'text-text-primary' },
+          { label: 'Conversions',        value: 0,  color: 'text-orange'       },
         ].map(({ label, value, color }) => (
           <div key={label} className="kpi-card">
             <div className={`text-2xl font-bold mb-0.5 ${color}`}>{value}</div>
