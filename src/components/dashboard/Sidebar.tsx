@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, MessageSquare, Target, Users,
-  Zap, BarChart2, CreditCard, Settings, LogOut, ChevronRight, X, Activity, Download,
+  Zap, BarChart2, CreditCard, Settings, LogOut, ChevronRight, X, Activity, UserCog,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { useUIStore } from '@/stores/uiStore'
@@ -16,6 +16,7 @@ const navItems = [
   { href: '/conversations', label: 'Conversations', icon: MessageSquare, badge: true },
   { href: '/leads',         label: 'Leads',         icon: Target      },
   { href: '/members',       label: 'Members',       icon: Users       },
+  { href: '/employees',     label: 'Employees',     icon: UserCog     },
   { href: '/automations',   label: 'Automations',   icon: Zap         },
   { href: '/analytics',     label: 'Analytics',     icon: BarChart2   },
   { href: '/payments',      label: 'Payments',      icon: CreditCard  },
