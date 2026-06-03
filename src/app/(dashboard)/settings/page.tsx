@@ -118,6 +118,21 @@ export default function SettingsPage() {
   const [logoPreview, setLogoPreview] = useState<string | null>(gymLogo)
   const logoRef = useRef<HTMLInputElement>(null)
 
+  // Load gym settings from Supabase on mount
+  useEffect(() => {
+    fetch('/api/data/gym-settings')
+      .then(r => r.json())
+      .then(data => {
+        if (data && !data.error) {
+          if (data.gym_name)  { setGymName(data.gym_name);  setStoreGymName(data.gym_name) }
+          if (data.city)        setCity(data.city)
+          if (data.phone)       setPhone(data.phone)
+          if (data.logo_url)  { setLogoPreview(data.logo_url); setGymLogo(data.logo_url) }
+          if (data.ai_persona)  setAiPersona(data.ai_persona)
+        }
+      })
+  }, [])
+
   // AI Persona
   const [aiPersona, setAiPersona] = useState(`You are Asha, a friendly AI assistant for ${brand.name}. Help with membership info, pricing, and schedules. Reply in Hindi or English based on user language. Keep responses short and friendly.`)
 
@@ -186,9 +201,30 @@ export default function SettingsPage() {
   }
 
   async function saveGymProfile() {
-    setSaving(true); await new Promise(r=>setTimeout(r,600)); setSaving(false)
-    setStoreGymName(gymName.trim() || brand.name); setGymLogo(logoPreview)
-    toast.success('Gym profile saved')
+    setSaving(true)
+    try {
+      const payload = {
+        gym_name:   gymName.trim() || brand.name,
+        city,
+        phone,
+        logo_url:   logoPreview,
+        ai_persona: aiPersona,
+      }
+      const res = await fetch('/api/data/gym-settings', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      setStoreGymName(payload.gym_name)
+      setGymLogo(logoPreview)
+      toast.success('Gym profile saved')
+    } catch (e: any) {
+      toast.error('Save failed: ' + e.message)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const webhookUrl = typeof window !== 'undefined' ? `${window.location.origin}/api/webhook/whatsapp` : 'https://your-domain.com/api/webhook/whatsapp'
@@ -354,7 +390,10 @@ export default function SettingsPage() {
                     ))}
                   </div>
                 </div>
-                <button onClick={()=>toast.success('AI Persona saved')} className="flex items-center gap-2 bg-blue hover:bg-blue-muted text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+                <button onClick={async()=>{
+                  await fetch('/api/data/gym-settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ai_persona:aiPersona})})
+                  toast.success('AI Persona saved')
+                }} className="flex items-center gap-2 bg-blue hover:bg-blue-muted text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
                   <Save className="w-3.5 h-3.5" />Save Persona
                 </button>
               </div>
