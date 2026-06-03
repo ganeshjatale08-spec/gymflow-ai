@@ -157,7 +157,7 @@ export default function LeadsPage() {
           <table className="w-full data-table">
             <thead>
               <tr>
-                <th>Name</th><th>Last Message</th><th>Score</th>
+                <th>Name</th><th>Last Message</th>
                 <th>Plan</th><th>Trial Date</th><th>Status</th><th>Added</th>
               </tr>
             </thead>
@@ -190,13 +190,6 @@ export default function LeadsPage() {
                         <span className="text-xs text-text-secondary line-clamp-2">{lead.last_message}</span>
                       </div>
                     ) : <span className="text-xs text-text-muted">—</span>}
-                  </td>
-                  <td>
-                    <div className={cn('text-sm font-bold', scoreColor(lead.score))}>{lead.score}</div>
-                    <div className="w-12 h-1 bg-surface3 rounded-full mt-1">
-                      <div className={cn('h-full rounded-full', lead.score >= 70 ? 'bg-green' : lead.score >= 40 ? 'bg-orange' : 'bg-text-muted')}
-                        style={{ width: `${lead.score}%` }} />
-                    </div>
                   </td>
                   <td><span className="text-sm text-text-secondary">{lead.plan_interest || '—'}</span></td>
                   <td>
