@@ -118,20 +118,6 @@ export default function SettingsPage() {
   const [logoPreview, setLogoPreview] = useState<string | null>(gymLogo)
   const logoRef = useRef<HTMLInputElement>(null)
 
-  // Load gym settings from Supabase on mount
-  useEffect(() => {
-    fetch('/api/data/gym-settings')
-      .then(r => r.json())
-      .then(data => {
-        if (data && !data.error) {
-          if (data.gym_name)  { setGymName(data.gym_name);  setStoreGymName(data.gym_name) }
-          if (data.city)        setCity(data.city)
-          if (data.phone)       setPhone(data.phone)
-          if (data.logo_url)  { setLogoPreview(data.logo_url); setGymLogo(data.logo_url) }
-          if (data.ai_persona)  setAiPersona(data.ai_persona)
-        }
-      })
-  }, [])
 
   // AI Persona
   const [aiPersona, setAiPersona] = useState(`You are Asha, a friendly AI assistant for ${brand.name}. Help with membership info, pricing, and schedules. Reply in Hindi or English based on user language. Keep responses short and friendly.`)
@@ -184,6 +170,21 @@ export default function SettingsPage() {
   // Schema copy
   const [schemaCopied, setSchemaCopied] = useState(false)
   const [schemaExpanded, setSchemaExpanded] = useState(false)
+
+  // Load gym settings from Supabase — after ALL state declarations
+  useEffect(() => {
+    fetch('/api/data/gym-settings')
+      .then(r => r.json())
+      .then(d => {
+        if (!d || d.error) return
+        if (d.gym_name)   { setGymName(d.gym_name);   setStoreGymName(d.gym_name) }
+        if (d.city)         setCity(d.city)
+        if (d.phone)        setPhone(d.phone)
+        if (d.logo_url)   { setLogoPreview(d.logo_url); setGymLogo(d.logo_url) }
+        if (d.ai_persona)   setAiPersona(d.ai_persona)
+      })
+      .catch(() => {})
+  }, []) // eslint-disable-line
 
   // Theme
   function applyTheme(t: 'dark'|'light') {

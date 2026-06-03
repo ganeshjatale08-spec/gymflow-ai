@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     // Update existing
     const { data, error } = await supabase
       .from('gym_settings')
-      .update({ ...body, updated_at: new Date().toISOString() })
+      .update(body)
       .eq('id', existing.id)
       .select()
       .single()
