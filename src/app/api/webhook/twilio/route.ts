@@ -1,13 +1,16 @@
+export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { generateAIResponse } from '@/lib/openai'
 import { sendWhatsAppMessage, validateTwilioSignature } from '@/lib/twilio'
 import type { Database } from '@/types/database.types'
 
-const supabase = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabase() {
+  return createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder'
+  )
+}
 
 const EMPTY_RESPONSE = new NextResponse('<Response></Response>', {
   headers: { 'Content-Type': 'text/xml' },
