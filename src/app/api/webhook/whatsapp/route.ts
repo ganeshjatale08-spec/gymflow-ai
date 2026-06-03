@@ -73,6 +73,32 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ status: 'ok' }, { status: 200 })
       }
       conv = newConv
+
+      // ── Auto-create lead for new WhatsApp contact ──────
+      const { data: existingLead } = await supabase
+        .from('leads')
+        .select('id')
+        .eq('phone', from)
+        .maybeSingle()
+
+      if (!existingLead) {
+        const { error: leadErr } = await supabase.from('leads').insert({
+          name:         name,
+          phone:        from,
+          status:       'new',
+          score:        10,
+          source:       'whatsapp',
+          last_message: text,
+        })
+        if (leadErr) log.push(`Lead create error: ${leadErr.message}`)
+        else log.push(`New lead created: ${name}`)
+      }
+    } else {
+      // Update last_message on existing lead
+      await supabase
+        .from('leads')
+        .update({ last_message: text, updated_at: new Date().toISOString() })
+        .eq('phone', from)
     }
 
     log.push(`Conv ID: ${conv.id}, AI enabled: ${conv.ai_enabled}`)
