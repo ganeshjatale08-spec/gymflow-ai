@@ -158,9 +158,6 @@ export default function AutomationsPage() {
           <h1 className="text-xl font-semibold text-text-primary page-heading">Automations</h1>
           <p className="text-text-muted text-sm mt-0.5">Trigger → Action workflows + Bulk messaging</p>
         </div>
-        <button className="flex items-center gap-2 bg-blue hover:bg-blue-muted text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-          <Plus className="w-4 h-4" />New Automation
-        </button>
       </motion.div>
 
       {/* Stats */}
@@ -501,7 +498,7 @@ export default function AutomationsPage() {
           <div className="bg-surface border border-border rounded-xl p-12 text-center">
             <Zap className="w-10 h-10 text-text-muted opacity-20 mx-auto mb-3" />
             <p className="text-sm text-text-muted">No automations yet</p>
-            <p className="text-xs text-text-muted mt-1">Click "New Automation" to create your first workflow</p>
+            <p className="text-xs text-text-muted mt-1">Automations will be added soon</p>
           </div>
         )}
         {automations.map((auto) => {
