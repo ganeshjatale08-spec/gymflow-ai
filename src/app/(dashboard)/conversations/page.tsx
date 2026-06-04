@@ -43,7 +43,14 @@ export default function ConversationsPage() {
   // Load messages when conversation changes
   useEffect(() => {
     if (!activeConversationId) return
+
+    // Mark as read — local state + Supabase
     markRead(activeConversationId)
+    fetch('/api/data/conversations', {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ id: activeConversationId, unread_count: 0 }),
+    }).catch(() => {})
 
     const loadMsgs = () => {
       fetch(`/api/data/messages?conversation_id=${activeConversationId}`)
@@ -52,7 +59,6 @@ export default function ConversationsPage() {
     }
 
     loadMsgs()
-    // Poll every 5s for new incoming WhatsApp messages
     const interval = setInterval(loadMsgs, 5000)
     return () => clearInterval(interval)
   }, [activeConversationId])
