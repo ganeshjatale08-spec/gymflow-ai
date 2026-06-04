@@ -190,6 +190,10 @@ export default function SettingsPage() {
         if (d.phone)        setPhone(d.phone)
         if (d.logo_url)   { setLogoPreview(d.logo_url); setGymLogo(d.logo_url) }
         if (d.ai_persona)   setAiPersona(d.ai_persona)
+        if (d.business_hours && typeof d.business_hours === 'object' && !Array.isArray(d.business_hours)) {
+          const bh = d.business_hours as any
+          if (bh.mon !== undefined) setHours(bh)
+        }
       })
       .catch(() => {})
   }, []) // eslint-disable-line
@@ -467,7 +471,10 @@ export default function SettingsPage() {
                     <input value={hours[day as keyof typeof hours]} onChange={e=>setHours(p=>({...p,[day]:e.target.value}))} placeholder="6:00-22:00 or Closed" className={cn(iCls,'flex-1')} />
                   </div>
                 ))}
-                <button onClick={()=>toast.success('Hours saved')} className="flex items-center gap-2 bg-blue hover:bg-blue-muted text-white text-sm font-medium px-4 py-2 rounded-lg mt-2">
+                <button onClick={async()=>{
+                  await fetch('/api/data/gym-settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({business_hours:hours})})
+                  toast.success('Hours saved')
+                }} className="flex items-center gap-2 bg-blue hover:bg-blue-muted text-white text-sm font-medium px-4 py-2 rounded-lg mt-2">
                   <Save className="w-3.5 h-3.5" />Save Hours
                 </button>
               </div>
