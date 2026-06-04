@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Settings, Bot, Clock, Phone, Save, Plus, Pencil, Trash2, Check, X,
   IndianRupee, Tag, Camera, ImageIcon, Sun, Moon, Users, Bell, MessageSquare,
-  Database, Zap, Shield, ChevronRight, User,
+  Database, Zap, Shield, ChevronRight, User, Dumbbell,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -26,8 +26,9 @@ const TABS = [
   { key: 'whatsapp',      label: 'WhatsApp API',   icon: MessageSquare },
   { key: 'supabase',      label: 'Database',       icon: Database    },
   { key: 'staff',         label: 'Staff',          icon: Users       },
-  { key: 'reminders',     label: 'Reminders',      icon: Zap         },
-  { key: 'schema',        label: 'DB Schema',      icon: Shield      },
+  { key: 'facilities',    label: 'Facilities',     icon: Dumbbell    },
+  { key: 'reminders',    label: 'Reminders',      icon: Zap         },
+  { key: 'schema',       label: 'DB Schema',      icon: Shield      },
 ] as const
 type TabKey = typeof TABS[number]['key']
 
@@ -174,6 +175,41 @@ export default function SettingsPage() {
 
   // Auto reminders
   const [reminders, setReminders] = useState({ expiry:7, payment:2, followup:3 })
+
+  // Facilities & Services
+  type FacilityItem = { id: string; name: string; icon: string; available: boolean }
+  type ServiceItem  = { id: string; name: string; timing: string; instructor: string }
+  const [facilities, setFacilities] = useState<FacilityItem[]>([
+    { id:'1', name:'AC / Air Conditioning', icon:'❄️', available:true  },
+    { id:'2', name:'Locker Room',            icon:'🔒', available:true  },
+    { id:'3', name:'Parking',               icon:'🅿️', available:true  },
+    { id:'4', name:'Shower',                icon:'🚿', available:false },
+    { id:'5', name:'Cafeteria',             icon:'☕', available:false },
+    { id:'6', name:'Steam Room',            icon:'♨️', available:false },
+  ])
+  const [services, setServices] = useState<ServiceItem[]>([])
+  const [newFacility, setNewFacility] = useState({ name:'', icon:'🏋️' })
+  const [newService,  setNewService]  = useState({ name:'', timing:'', instructor:'' })
+  const [addingFacility, setAddingFacility] = useState(false)
+  const [addingService,  setAddingService]  = useState(false)
+
+  useEffect(() => {
+    fetch('/api/data/gym-settings').then(r=>r.json()).then(d => {
+      const bh = d?.business_hours as any
+      if (bh?.facilities) setFacilities(bh.facilities)
+      if (bh?.services)   setServices(bh.services)
+    })
+  }, [])
+
+  async function saveFacilities(f: FacilityItem[], s: ServiceItem[]) {
+    const { data: gs } = await fetch('/api/data/gym-settings').then(r=>r.json()).then(d=>({data:d}))
+    const bh = (gs?.business_hours as any) || {}
+    await fetch('/api/data/gym-settings', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ business_hours: { ...bh, facilities: f, services: s } })
+    })
+    toast.success('Facilities saved')
+  }
 
   // Schema copy
   const [schemaCopied, setSchemaCopied] = useState(false)
@@ -662,6 +698,137 @@ export default function SettingsPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* ── FACILITIES ── */}
+            {activeTab === 'facilities' && (
+              <div className="space-y-5">
+
+                {/* Facilities */}
+                <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-semibold text-text-primary">Gym Facilities</h3>
+                      <p className="text-xs text-text-muted mt-0.5">Available/unavailable toggle karein</p>
+                    </div>
+                    <button onClick={() => setAddingFacility(true)}
+                      className="flex items-center gap-1.5 text-xs font-medium text-blue-soft bg-blue/10 border border-blue/20 px-3 py-1.5 rounded-lg hover:bg-blue/15">
+                      <Plus className="w-3.5 h-3.5" />Add
+                    </button>
+                  </div>
+
+                  <AnimatePresence>
+                    {addingFacility && (
+                      <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:'auto'}} exit={{opacity:0,height:0}} className="overflow-hidden">
+                        <div className="p-3 bg-blue/5 border border-blue/15 rounded-xl space-y-2">
+                          <div className="grid grid-cols-3 gap-2">
+                            <input value={newFacility.icon} onChange={e=>setNewFacility(p=>({...p,icon:e.target.value}))} placeholder="Emoji" className={cn(iCls,'text-center text-lg')} maxLength={4} />
+                            <input value={newFacility.name} onChange={e=>setNewFacility(p=>({...p,name:e.target.value}))} placeholder="Facility name" className={cn(iCls,'col-span-2')} />
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={()=>setAddingFacility(false)} className="flex-1 py-1.5 text-xs text-text-muted border border-border rounded-lg">Cancel</button>
+                            <button onClick={()=>{
+                              if(!newFacility.name.trim()){toast.error('Name required');return}
+                              const updated=[...facilities,{id:Date.now().toString(),...newFacility,available:true}]
+                              setFacilities(updated);setAddingFacility(false);setNewFacility({name:'',icon:'🏋️'})
+                              saveFacilities(updated,services)
+                            }} className="flex-1 py-1.5 text-xs font-medium bg-blue text-white rounded-lg">Add</button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {facilities.map(f => (
+                      <div key={f.id} className={cn('flex items-center gap-3 p-3 rounded-xl border transition-all',
+                        f.available ? 'bg-green/5 border-green/20' : 'bg-surface2 border-border opacity-60')}>
+                        <span className="text-xl flex-shrink-0">{f.icon}</span>
+                        <span className="text-sm font-medium text-text-primary flex-1">{f.name}</span>
+                        <button onClick={()=>{
+                          const updated=facilities.map(x=>x.id===f.id?{...x,available:!x.available}:x)
+                          setFacilities(updated); saveFacilities(updated,services)
+                        }} className={cn('w-10 h-5 rounded-full relative transition-colors flex-shrink-0',
+                          f.available?'bg-green':'bg-surface3')}>
+                          <div className={cn('absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform',
+                            f.available?'translate-x-5':'translate-x-0.5')} />
+                        </button>
+                        <button onClick={()=>{
+                          const updated=facilities.filter(x=>x.id!==f.id)
+                          setFacilities(updated); saveFacilities(updated,services)
+                        }} className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-red transition-colors">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Classes & Services */}
+                <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-semibold text-text-primary">Classes & Services</h3>
+                      <p className="text-xs text-text-muted mt-0.5">Yoga, Zumba, CrossFit etc. add karein</p>
+                    </div>
+                    <button onClick={() => setAddingService(true)}
+                      className="flex items-center gap-1.5 text-xs font-medium text-blue-soft bg-blue/10 border border-blue/20 px-3 py-1.5 rounded-lg hover:bg-blue/15">
+                      <Plus className="w-3.5 h-3.5" />Add Class
+                    </button>
+                  </div>
+
+                  <AnimatePresence>
+                    {addingService && (
+                      <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:'auto'}} exit={{opacity:0,height:0}} className="overflow-hidden">
+                        <div className="p-3 bg-blue/5 border border-blue/15 rounded-xl space-y-2">
+                          <input value={newService.name} onChange={e=>setNewService(p=>({...p,name:e.target.value}))} placeholder="Class name (e.g. Yoga, Zumba)" className={iCls} />
+                          <div className="grid grid-cols-2 gap-2">
+                            <input value={newService.timing} onChange={e=>setNewService(p=>({...p,timing:e.target.value}))} placeholder="Timing (e.g. 6 AM - 7 AM)" className={iCls} />
+                            <input value={newService.instructor} onChange={e=>setNewService(p=>({...p,instructor:e.target.value}))} placeholder="Instructor name" className={iCls} />
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={()=>setAddingService(false)} className="flex-1 py-1.5 text-xs text-text-muted border border-border rounded-lg">Cancel</button>
+                            <button onClick={()=>{
+                              if(!newService.name.trim()){toast.error('Name required');return}
+                              const updated=[...services,{id:Date.now().toString(),...newService}]
+                              setServices(updated);setAddingService(false);setNewService({name:'',timing:'',instructor:''})
+                              saveFacilities(facilities,updated)
+                            }} className="flex-1 py-1.5 text-xs font-medium bg-blue text-white rounded-lg">Add</button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {services.length === 0 ? (
+                    <div className="text-center py-8 text-text-muted text-sm">
+                      <span className="text-2xl block mb-2">🧘</span>
+                      Koi class nahi — "Add Class" se add karein
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {services.map(s => (
+                        <div key={s.id} className="flex items-center gap-3 p-3 bg-surface2 border border-border rounded-xl group">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-semibold text-text-primary">{s.name}</div>
+                            <div className="flex items-center gap-3 mt-0.5">
+                              {s.timing && <span className="text-xs text-text-muted">🕐 {s.timing}</span>}
+                              {s.instructor && <span className="text-xs text-text-muted">👤 {s.instructor}</span>}
+                            </div>
+                          </div>
+                          <button onClick={()=>{
+                            const updated=services.filter(x=>x.id!==s.id)
+                            setServices(updated); saveFacilities(facilities,updated)
+                          }} className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center text-text-muted hover:text-red">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
               </div>
             )}
 

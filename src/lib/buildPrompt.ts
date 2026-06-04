@@ -48,6 +48,20 @@ export async function buildSystemPrompt(): Promise<string> {
       sections.push(`Plans: ${planLines}`)
     }
 
+    // 5. Facilities
+    const facilities = (bh.facilities as any[]) || []
+    const available  = facilities.filter((f: any) => f.available).map((f: any) => f.name)
+    if (available.length > 0) sections.push(`Facilities: ${available.join(', ')}`)
+
+    // 6. Classes/Services
+    const services = (bh.services as any[]) || []
+    if (services.length > 0) {
+      const svcLines = services.map((s: any) =>
+        `${s.name}${s.timing ? ' ('+s.timing+')' : ''}${s.instructor ? ' - '+s.instructor : ''}`
+      ).join(' | ')
+      sections.push(`Classes: ${svcLines}`)
+    }
+
     return sections.join('\n')
   } catch (err) {
     console.error('buildSystemPrompt error:', err)
