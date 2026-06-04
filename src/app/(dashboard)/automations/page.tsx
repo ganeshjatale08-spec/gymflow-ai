@@ -14,6 +14,7 @@ import { GlowCard } from '@/components/shared/GlowCard'
 import { StatusDot } from '@/components/shared/StatusDot'
 import { cn } from '@/lib/utils'
 import brand from '@/lib/brand.config'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 
 // ── Automations data ──────────────────────────────────
 const triggerIcons: Record<string, React.ElementType> = {
@@ -165,8 +166,15 @@ export default function AutomationsPage() {
     .replace(/{{gym_name}}/g, brand.name)
     .replace(/{{phone}}/g,    brand.phone)
 
+  const [confirmSend, setConfirmSend] = useState(false)
+
   async function handleSend() {
     if (!message.trim()) { toast.error('Please write a message first'); return }
+    if (recipientCount === 0) { toast.error('No recipients found for selected audience'); return }
+    setConfirmSend(true)
+  }
+
+  async function doSend() {
     setSending(true)
     try {
       const res  = await fetch('/api/bulk-send', {
@@ -190,6 +198,16 @@ export default function AutomationsPage() {
   }
 
   return (
+    <>
+    <ConfirmDialog
+      open={confirmSend}
+      title={`Send to ${recipientCount} recipients?`}
+      message={`Yeh message "${message.slice(0,50)}${message.length>50?'...':''}" WhatsApp ke zariye ${recipientCount} logo ko bheja jaayega.`}
+      confirmLabel="Send Now"
+      confirmColor="blue"
+      onConfirm={doSend}
+      onCancel={() => setConfirmSend(false)}
+    />
     <motion.div variants={staggerContainer} initial="initial" animate="animate" className="space-y-5 max-w-4xl">
 
       {/* Header */}
@@ -519,6 +537,7 @@ export default function AutomationsPage() {
           const [result, setResult]   = useState<string | null>(null)
 
           async function run() {
+            if (!window.confirm(`${label}\n\n${sub}\n\nKya aap sure hain? Messages turant jaayenge.`)) return
             setRunning(true); setResult(null)
             try {
               const r = await fetch(url); const d = await r.json()
@@ -548,8 +567,7 @@ export default function AutomationsPage() {
                 {running ? <><motion.div animate={{rotate:360}} transition={{duration:0.8,repeat:Infinity,ease:'linear'}} className="w-3.5 h-3.5 border-2 border-blue/30 border-t-blue-soft rounded-full" />Running...</> : <><Send className="w-3 h-3" />Run Now</>}
               </button>
             </div>
-          )
-        })}
+        )})}
       </motion.div>
 
       {/* ── Automations List ── */}
@@ -602,5 +620,6 @@ export default function AutomationsPage() {
       </motion.div>
 
     </motion.div>
+    </>
   )
 }

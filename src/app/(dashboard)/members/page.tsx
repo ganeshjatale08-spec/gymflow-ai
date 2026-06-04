@@ -8,6 +8,7 @@ import { formatINR } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { AddMemberModal } from '@/components/members/AddMemberModal'
 import { MemberProfileDrawer } from '@/components/members/MemberProfileDrawer'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 
 type MemberRow = {
   id: string; name: string; phone: string
@@ -31,6 +32,7 @@ export default function MembersPage() {
   const [members, setMembers]           = useState<MemberRow[]>([])
   const [selectedMember, setSelectedMember] = useState<MemberRow | null>(null)
   const [checkedIds, setCheckedIds]     = useState<Set<string>>(new Set())
+  const [confirmBulk, setConfirmBulk]   = useState<'message'|'renew'|null>(null)
   const [loading, setLoading]           = useState(true)
 
   useEffect(() => {
