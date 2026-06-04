@@ -12,7 +12,6 @@ interface RecordPaymentModalProps {
   onAdd?: (payment: { member: string; amount: number; method: string; utr: string; cheque_no: string; collected_by: string; description: string; due_date: string }) => void
 }
 
-const members = ['Rahul Kumar', 'Priya Sharma', 'Ananya Singh', 'Vikram Patel', 'Kavya Reddy', 'Arjun Mehta']
 const methods = ['UPI', 'Cash', 'Card', 'Net Banking', 'Cheque']
 const plans = [
   { name: 'Starter Plan', amount: 1999 },
@@ -62,11 +61,14 @@ export function RecordPaymentModal({ open, onClose, onAdd }: RecordPaymentModalP
       <form onSubmit={handleSubmit} className="space-y-4">
 
         <div>
-          <label className={labelClass}>Member <span className="text-red">*</span></label>
-          <select value={form.member} onChange={e => set('member', e.target.value)} required className={inputClass}>
-            <option value="" className="bg-surface">Select member...</option>
-            {members.map(m => <option key={m} value={m} className="bg-surface">{m}</option>)}
-          </select>
+          <label className={labelClass}>Member Name <span className="text-red">*</span></label>
+          <input
+            value={form.member}
+            onChange={e => set('member', e.target.value)}
+            placeholder="Member ka naam likhein..."
+            required
+            className={inputClass}
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
