@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
     method:       body.method || null,
     utr_ref:      body.utr || body.utr_ref || null,
     cheque_no:    body.cheque_no || null,
+    collected_by: body.collected_by || null,
     description:  body.description || null,
     due_date:     body.due_date || null,
     paid_at:      body.paid_at || null,

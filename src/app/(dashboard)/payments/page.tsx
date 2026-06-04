@@ -13,7 +13,8 @@ import { InvoiceModal } from '@/components/payments/InvoiceModal'
 type Payment = {
   id: string; member: string; amount: number; status: string
   method: string | null; upi_ref: string | null; cheque_no?: string | null
-  description: string; due_date: string; paid_at: string | null
+  collected_by?: string | null; description: string
+  due_date: string; paid_at: string | null
 }
 
 const statusStyle: Record<string, { icon: React.ElementType; cls: string }> = {
@@ -164,7 +165,7 @@ export default function PaymentsPage() {
             <thead>
               <tr>
                 <th>Member</th><th>Amount</th><th>Description</th>
-                <th>Method</th><th>Due Date</th><th>Paid At</th><th>Status</th><th>Actions</th>
+                <th>Method / Ref</th><th>Due Date</th><th>Paid At</th><th>Status</th><th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -230,7 +231,12 @@ export default function PaymentsPage() {
                     </td>
                     <td><div className="flex items-center gap-1 text-sm font-semibold text-text-primary"><IndianRupee className="w-3 h-3" />{p.amount.toLocaleString('en-IN')}</div></td>
                     <td className="text-sm text-text-secondary max-w-[180px] truncate">{p.description}</td>
-                    <td><span className="text-xs bg-surface2 px-2 py-0.5 rounded text-text-muted">{p.method||'—'}</span></td>
+                    <td>
+                      <span className="text-xs bg-surface2 px-2 py-0.5 rounded text-text-muted">{p.method||'—'}</span>
+                      {p.upi_ref && <div className="text-[10px] text-text-muted font-mono mt-0.5">UTR: {p.upi_ref}</div>}
+                      {p.cheque_no && <div className="text-[10px] text-text-muted font-mono mt-0.5">Cheque: {p.cheque_no}</div>}
+                      {p.collected_by && <div className="text-[10px] text-text-muted mt-0.5">👤 {p.collected_by}</div>}
+                    </td>
                     <td className="text-sm text-text-secondary">{p.due_date}</td>
                     <td className="text-sm text-text-secondary">{p.paid_at||'—'}</td>
                     <td><div className={cn('flex items-center gap-1.5 text-xs font-medium',sc.cls)}><Icon className="w-3.5 h-3.5" /><span className="capitalize">{p.status}</span></div></td>
@@ -257,10 +263,10 @@ export default function PaymentsPage() {
 
     <RecordPaymentModal open={showAddModal} onClose={() => setShowAddModal(false)}
       onAdd={async newPayment => {
-        const body = { member_name: newPayment.member, amount: newPayment.amount, status: 'completed', method: newPayment.method, utr_ref: newPayment.utr||null, cheque_no: newPayment.cheque_no||null, description: newPayment.description, due_date: newPayment.due_date||new Date().toISOString().split('T')[0], paid_at: new Date().toISOString().split('T')[0] }
+        const body = { member_name: newPayment.member, amount: newPayment.amount, status: 'completed', method: newPayment.method, utr_ref: newPayment.utr||null, cheque_no: newPayment.cheque_no||null, collected_by: newPayment.collected_by||null, description: newPayment.description, due_date: newPayment.due_date||new Date().toISOString().split('T')[0], paid_at: new Date().toISOString().split('T')[0] }
         const res   = await fetch('/api/data/payments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
         const saved = await res.json()
-        if (saved.id) setPayments(prev => [{ id: saved.id, member: saved.member_name, amount: saved.amount, status: saved.status, method: saved.method, upi_ref: saved.utr_ref, description: saved.description || '', due_date: saved.due_date, paid_at: saved.paid_at }, ...prev])
+        if (saved.id) setPayments(prev => [{ id: saved.id, member: saved.member_name, amount: saved.amount, status: saved.status, method: saved.method, upi_ref: saved.utr_ref, cheque_no: saved.cheque_no, collected_by: saved.collected_by, description: saved.description || '', due_date: saved.due_date, paid_at: saved.paid_at }, ...prev])
       }} />
 
     <InvoiceModal payment={invoicePayment} onClose={() => setInvoicePayment(null)} />

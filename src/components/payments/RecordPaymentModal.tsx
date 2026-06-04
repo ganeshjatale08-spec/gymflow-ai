@@ -9,7 +9,7 @@ import { Modal } from '@/components/shared/Modal'
 interface RecordPaymentModalProps {
   open: boolean
   onClose: () => void
-  onAdd?: (payment: { member: string; amount: number; method: string; utr: string; cheque_no: string; description: string; due_date: string }) => void
+  onAdd?: (payment: { member: string; amount: number; method: string; utr: string; cheque_no: string; collected_by: string; description: string; due_date: string }) => void
 }
 
 const members = ['Rahul Kumar', 'Priya Sharma', 'Ananya Singh', 'Vikram Patel', 'Kavya Reddy', 'Arjun Mehta']
