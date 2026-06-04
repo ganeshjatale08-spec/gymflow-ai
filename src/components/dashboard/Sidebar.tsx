@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, MessageSquare, Target, Users,
-  Zap, BarChart2, CreditCard, Settings, LogOut, ChevronRight, X, Activity, UserCog,
+  Zap, BarChart2, CreditCard, Settings, LogOut, ChevronRight, X, Activity, UserCog, Upload,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { useUIStore } from '@/stores/uiStore'
@@ -20,6 +20,7 @@ const navItems = [
   { href: '/automations',   label: 'Automations',   icon: Zap         },
   { href: '/analytics',     label: 'Analytics',     icon: BarChart2   },
   { href: '/payments',      label: 'Payments',      icon: CreditCard  },
+  { href: '/import',        label: 'Import Data',   icon: Upload      },
   { href: '/activity',      label: 'Activity Log',  icon: Activity    },
   { href: '/settings',      label: 'Settings',      icon: Settings    },
 ]
