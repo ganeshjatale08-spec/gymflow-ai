@@ -290,28 +290,27 @@ export default function SettingsPage() {
   const currentTab = TABS.find(t => t.key === activeTab)!
 
   return (
-    <div className="flex gap-6 max-w-6xl">
+    <div className="max-w-4xl space-y-4">
 
-      {/* ── Left sidebar tabs ── */}
-      <div className="w-52 flex-shrink-0 space-y-1">
-        <p className="text-xs font-semibold text-text-muted uppercase tracking-wider px-3 mb-3">Settings</p>
+      {/* ── Mobile: horizontal scrollable tabs ── */}
+      <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
         {TABS.map(tab => {
           const Icon = tab.icon
           return (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-              className={cn('w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left',
+              className={cn('flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all whitespace-nowrap flex-shrink-0',
                 activeTab === tab.key
                   ? 'bg-blue/10 border border-blue/20 text-blue-soft'
-                  : 'text-text-muted hover:bg-surface2 hover:text-text-primary')}>
-              <Icon className="w-4 h-4 flex-shrink-0" />
+                  : 'bg-surface2 border border-border text-text-muted hover:text-text-primary')}>
+              <Icon className="w-3.5 h-3.5 flex-shrink-0" />
               {tab.label}
             </button>
           )
         })}
       </div>
 
-      {/* ── Right content ── */}
-      <div className="flex-1 min-w-0">
+      {/* ── Content ── */}
+      <div className="min-w-0">
         <AnimatePresence mode="wait">
           <motion.div key={activeTab}
             initial={{ opacity:0, x:8 }} animate={{ opacity:1, x:0 }}
