@@ -4,65 +4,50 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
+import { Eye, EyeOff, Zap } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 import { fadeUp } from '@/lib/constants'
-import brand from '@/lib/brand.config'
-
-const DEV_EMAIL = 'admin@gym.com'
-const DEV_PASSWORD = 'admin123'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const [showPw, setShowPw]     = useState(false)
+  const [loading, setLoading]   = useState(false)
+  const router  = useRouter()
+  const supabase = createClient()
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true)
+    if (!email.trim() || !password.trim()) { toast.error('Email aur password required'); return }
 
-    // Dev credentials check (works without Supabase)
-    if (email === DEV_EMAIL && password === DEV_PASSWORD) {
-      sessionStorage.setItem('dev_logged_in', '1')
-      toast.success('Welcome back!')
-      router.push('/dashboard')
+    setLoading(true)
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    setLoading(false)
+
+    if (error) {
+      if (error.message.includes('Invalid login')) toast.error('Email ya password galat hai')
+      else if (error.message.includes('Email not confirmed')) toast.error('Pehle email verify karein')
+      else toast.error(error.message)
       return
     }
 
-    // Try Supabase if real credentials provided
-    try {
-      const { createClient } = await import('@/lib/supabase/client')
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-
-      if (error) {
-        toast.error('Invalid email or password')
-        setLoading(false)
-        return
-      }
-
-      router.push('/dashboard')
-    } catch {
-      toast.error('Invalid email or password')
-      setLoading(false)
-    }
+    toast.success('Login successful!')
+    router.push('/dashboard')
+    router.refresh()
   }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
-      <motion.div
-        variants={fadeUp}
-        initial="initial"
-        animate="animate"
-        className="w-full max-w-sm"
-      >
+      <motion.div variants={fadeUp} initial="initial" animate="animate" className="w-full max-w-sm">
+
         {/* Logo */}
         <div className="flex items-center gap-3 mb-8 justify-center">
-          <div className="w-10 h-10 bg-blue rounded-xl flex items-center justify-center text-lg">
-            {brand.logo}
+          <div className="w-10 h-10 bg-blue rounded-xl flex items-center justify-center">
+            <Zap className="w-5 h-5 text-white" />
           </div>
           <div>
-            <div className="text-base font-semibold text-text-primary">{brand.name}</div>
-            <div className="text-xs text-text-muted">{brand.tagline}</div>
+            <div className="text-base font-semibold text-text-primary">GymFlow AI</div>
+            <div className="text-xs text-text-muted">Gym Management Platform</div>
           </div>
         </div>
 
@@ -76,46 +61,42 @@ export default function LoginPage() {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoFocus
-                placeholder="admin@gym.com"
+                onChange={e => setEmail(e.target.value)}
+                required autoFocus
+                placeholder="admin@yourgym.com"
                 className="w-full bg-surface2 border border-border rounded-lg px-3 py-2.5 text-text-primary placeholder-text-muted text-sm focus:outline-none focus:border-blue/50 transition-colors"
               />
             </div>
 
             <div>
               <label className="block text-xs text-text-muted mb-1.5">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="••••••••"
-                className="w-full bg-surface2 border border-border rounded-lg px-3 py-2.5 text-text-primary placeholder-text-muted text-sm focus:outline-none focus:border-blue/50 transition-colors"
-              />
+              <div className="relative">
+                <input
+                  type={showPw ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  className="w-full bg-surface2 border border-border rounded-lg px-3 py-2.5 pr-10 text-text-primary placeholder-text-muted text-sm focus:outline-none focus:border-blue/50 transition-colors"
+                />
+                <button type="button" onClick={() => setShowPw(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors">
+                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue hover:bg-blue-muted text-white font-medium py-2.5 rounded-lg transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-            >
+            <button type="submit" disabled={loading}
+              className="w-full bg-blue hover:bg-blue-muted text-white font-medium py-2.5 rounded-lg transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed">
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
-
-          {/* Default credentials hint */}
-          <div className="mt-4 p-3 bg-surface2 border border-border rounded-lg">
-            <p className="text-xs text-text-muted text-center">
-              Default login: <span className="text-text-secondary font-mono">admin@gym.com</span> / <span className="text-text-secondary font-mono">admin123</span>
-            </p>
-          </div>
         </div>
 
-        <p className="text-center text-xs text-text-muted mt-4">
-          {brand.name} · {brand.city}
+        <p className="text-center text-xs text-text-muted mt-5">
+          Pehli baar? Supabase Dashboard mein user banayein
         </p>
+
       </motion.div>
     </div>
   )
