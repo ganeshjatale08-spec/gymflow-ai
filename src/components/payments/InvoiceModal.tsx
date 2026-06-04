@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Printer } from 'lucide-react'
 import { useUIStore } from '@/stores/uiStore'
@@ -19,15 +19,27 @@ function fmt(n: number) {
 }
 
 export function InvoiceModal({ payment, onClose }: Props) {
-  const { gymName } = useUIStore()
-  const printRef    = useRef<HTMLDivElement>(null)
+  const { gymName }         = useUIStore()
+  const printRef            = useRef<HTMLDivElement>(null)
+  const [gymCity, setCity]  = useState('')
+  const [gymPhone, setPhone]= useState('')
+
+  useEffect(() => {
+    if (!payment) return
+    fetch('/api/data/gym-settings')
+      .then(r => r.json())
+      .then(d => {
+        if (d.city)  setCity(d.city)
+        if (d.phone) setPhone(d.phone)
+      })
+  }, [payment])
 
   if (!payment) return null
 
   const invoiceNo = `INV-${payment.id.toString().slice(0,6).toUpperCase()}-${new Date().getFullYear()}`
   const today     = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
-  const city      = typeof window !== 'undefined' ? (localStorage.getItem('gym_city') || '') : ''
-  const phone     = typeof window !== 'undefined' ? (localStorage.getItem('gym_phone') || '') : ''
+  const city      = gymCity
+  const phone     = gymPhone
 
   function handlePrint() {
     const content = printRef.current?.innerHTML

@@ -13,7 +13,11 @@ export async function GET() {
   const { data, error } = await db()
     .from('payments').select('*').order('created_at', { ascending: false })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  const normalized = (data || []).map((p: any) => ({ ...p, member: p.member_name || p.member || '' }))
+  const normalized = (data || []).map((p: any) => ({
+    ...p,
+    member:       p.member_name || p.member || '',
+    upi_ref:      p.utr_ref || p.upi_ref || null,  // normalize field name
+  }))
   return NextResponse.json(normalized)
 }
 
@@ -33,7 +37,7 @@ export async function POST(req: NextRequest) {
   }
   const { data, error } = await db().from('payments').insert(payload).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ ...data, member: data.member_name })
+  return NextResponse.json({ ...data, member: data.member_name, upi_ref: data.utr_ref || null })
 }
 
 export async function PUT(req: NextRequest) {
