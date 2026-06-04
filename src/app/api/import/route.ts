@@ -22,11 +22,16 @@ export async function POST(req: NextRequest) {
   let inserted = 0; let failed = 0; const errors: string[] = []
 
   for (const row of rows) {
+    // Skip empty rows
+    const rowName  = (row.name  || row.Name  || row['Member Name'] || '').trim()
+    const rowPhone = (row.phone || row.Phone || row['Phone Number'] || row.Mobile || '').trim()
+    if (!rowName && !rowPhone) continue
+
     try {
       if (type === 'members') {
         const { error } = await supabase.from('members').insert({
-          name:             row.name || row.Name || row['Member Name'] || '',
-          phone:            row.phone || row.Phone || row['Phone Number'] || row.Mobile || '',
+          name:             rowName,
+          phone:            rowPhone,
           email:            row.email || row.Email || null,
           status:           (row.status || row.Status || 'active').toLowerCase(),
           plan_name:        row.plan || row.Plan || row['Plan Name'] || row['Membership Plan'] || null,
@@ -36,12 +41,15 @@ export async function POST(req: NextRequest) {
           trainer:          row.trainer || row.Trainer || null,
           attendance_count: Number(row.attendance || row.Attendance || 0) || 0,
         })
-        if (error) { failed++; errors.push(`${row.name}: ${error.message}`) }
-        else inserted++
+        if (error) {
+          if (error.message?.includes('duplicate') || error.code === '23505') {
+            // skip duplicates
+          } else { failed++; errors.push(`${rowName}: ${error.message}`) }
+        } else inserted++
       } else if (type === 'leads') {
         const { error } = await supabase.from('leads').insert({
-          name:   row.name || row.Name || row['Lead Name'] || '',
-          phone:  row.phone || row.Phone || row['Phone Number'] || row.Mobile || '',
+          name:   rowName,
+          phone:  rowPhone,
           email:  row.email || row.Email || null,
           status: (row.status || row.Status || 'new').toLowerCase(),
           source: row.source || row.Source || 'whatsapp',
@@ -49,11 +57,19 @@ export async function POST(req: NextRequest) {
           interest: row.interest || row.Interest || row['Fitness Goal'] || null,
           plan_interest: row.plan || row.Plan || row['Interested Plan'] || null,
         })
-        if (error) { failed++; errors.push(`${row.name}: ${error.message}`) }
-        else inserted++
+        if (error) {
+          if (error.message?.includes('duplicate') || error.code === '23505') {
+            // skip duplicates
+          } else { failed++; errors.push(`${rowName}: ${error.message}`) }
+        } else inserted++
       }
     } catch (e: any) {
-      failed++; errors.push(e.message)
+      // Duplicate phone = skip silently
+      if (e.message?.includes('duplicate') || e.message?.includes('unique')) {
+        // already exists, skip
+      } else {
+        failed++; errors.push(e.message)
+      }
     }
   }
 
