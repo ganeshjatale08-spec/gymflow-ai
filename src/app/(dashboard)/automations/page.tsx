@@ -513,6 +513,49 @@ export default function AutomationsPage() {
         </div>
       </motion.div>
 
+      {/* ── Quick Actions ── */}
+      <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {[
+          { label: 'Send Renewal Reminders', sub: 'Members expiring this week ko WhatsApp bhejo', url: '/api/automations/renewals', color: 'border-orange/20 bg-orange/5', iconColor: 'text-orange', icon: Bell },
+          { label: 'Send Follow-up Messages', sub: 'Inactive leads ko follow-up bhejo',           url: '/api/automations/followup',  color: 'border-blue/20 bg-blue/5',   iconColor: 'text-blue-soft', icon: MessageSquare },
+        ].map(({ label, sub, url, color, iconColor, icon: Icon }) => {
+          const [running, setRunning] = useState(false)
+          const [result, setResult]   = useState<string | null>(null)
+
+          async function run() {
+            setRunning(true); setResult(null)
+            try {
+              const r = await fetch(url); const d = await r.json()
+              setResult(d.sent > 0 ? `✅ ${d.sent} messages sent` : `ℹ️ ${d.message || 'No action needed'}`)
+              if (d.sent > 0) toast.success(`${d.sent} messages sent via WhatsApp`)
+              else toast.info(d.message || 'No action needed')
+            } catch { setResult('❌ Error'); toast.error('Failed') }
+            finally { setRunning(false) }
+          }
+
+          return (
+            <div key={label} className={cn('border rounded-xl p-4', color)}>
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 bg-surface2 border border-border rounded-lg flex items-center justify-center">
+                    <Icon className={cn('w-4 h-4', iconColor)} />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-text-primary">{label}</div>
+                    <div className="text-xs text-text-muted">{sub}</div>
+                  </div>
+                </div>
+              </div>
+              {result && <p className="text-xs text-text-secondary mb-2">{result}</p>}
+              <button onClick={run} disabled={running}
+                className="w-full py-2 text-xs font-semibold bg-blue/10 border border-blue/20 text-blue-soft hover:bg-blue/15 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5">
+                {running ? <><motion.div animate={{rotate:360}} transition={{duration:0.8,repeat:Infinity,ease:'linear'}} className="w-3.5 h-3.5 border-2 border-blue/30 border-t-blue-soft rounded-full" />Running...</> : <><Send className="w-3 h-3" />Run Now</>}
+              </button>
+            </div>
+          )
+        })}
+      </motion.div>
+
       {/* ── Automations List ── */}
       <motion.div variants={fadeUp} className="space-y-3">
         <h2 className="text-sm font-semibold text-text-primary">Workflow Automations</h2>
