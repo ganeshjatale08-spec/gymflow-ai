@@ -11,7 +11,7 @@ export async function buildSystemPrompt(): Promise<string> {
   const supabase = db()
   const { data: s } = await supabase
     .from('gym_settings')
-    .select('*')
+    .select('ai_persona, gym_name, city, phone, business_hours')
     .limit(1)
     .maybeSingle()
 
@@ -26,19 +26,20 @@ export async function buildSystemPrompt(): Promise<string> {
   const gymLine = [s.gym_name, s.city].filter(Boolean).join(', ')
   if (gymLine) sections.push(`Gym: ${gymLine}${s.phone ? ` | Contact: ${s.phone}` : ''}`)
 
-  // 3. Business hours
-  const hours = s.business_hours as any
-  if (hours && typeof hours === 'object') {
-    const dayMap: Record<string, string> = { mon:'Mon',tue:'Tue',wed:'Wed',thu:'Thu',fri:'Fri',sat:'Sat',sun:'Sun' }
-    const hourLines = Object.entries(hours)
-      .filter(([k]) => k !== 'employees' && k !== 'plans')
-      .map(([k, v]) => `${dayMap[k] || k}: ${v}`)
+  // 3. Business hours (skip non-day keys)
+  const dayKeys = ['mon','tue','wed','thu','fri','sat','sun']
+  if (bh && typeof bh === 'object') {
+    const dayMap: Record<string,string> = { mon:'Mon',tue:'Tue',wed:'Wed',thu:'Thu',fri:'Fri',sat:'Sat',sun:'Sun' }
+    const hourLines = Object.entries(bh)
+      .filter(([k]) => dayKeys.includes(k))
+      .map(([k, v]) => `${dayMap[k]}: ${v}`)
       .join(', ')
     if (hourLines) sections.push(`Timings: ${hourLines}`)
   }
 
-  // 4. Membership plans
-  const plans = (s.plans_data as any[]) || []
+  // 4. Membership plans (stored in business_hours.plans)
+  const bh = (s.business_hours as any) || {}
+  const plans = (bh.plans as any[]) || []
   if (plans.length > 0) {
     const planLines = plans.map((p: any) =>
       `${p.name}: ₹${Number(p.price).toLocaleString('en-IN')}/${p.duration === 'monthly' ? 'mo' : p.duration === 'quarterly' ? '3mo' : 'yr'}${p.features?.length ? ' (' + p.features.slice(0,3).join(', ') + ')' : ''}`
