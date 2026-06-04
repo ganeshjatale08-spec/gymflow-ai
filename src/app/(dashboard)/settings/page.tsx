@@ -125,9 +125,17 @@ export default function SettingsPage() {
   // Hours
   const [hours, setHours] = useState({ mon:'6:00-22:00',tue:'6:00-22:00',wed:'6:00-22:00',thu:'6:00-22:00',fri:'6:00-22:00',sat:'7:00-20:00',sun:'Closed' })
 
-  // Plans
+  // Plans — load from Supabase
   const [plans, setPlans]       = useState<Plan[]>(DEFAULT_PLANS)
   const [editPlanId, setEditPlanId] = useState<string|null>(null)
+
+  useEffect(() => {
+    fetch('/api/data/plans').then(r=>r.json()).then(d=>{ if(Array.isArray(d) && d.length>0) setPlans(d) })
+  }, [])
+
+  async function savePlans(updated: Plan[]) {
+    await fetch('/api/data/plans',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(updated)})
+  }
   const [addingPlan, setAddingPlan] = useState(false)
   const [planForm, setPlanForm] = useState<Partial<Plan>>({})
   const [featureInput, setFeatureInput] = useState('')
@@ -418,7 +426,7 @@ export default function SettingsPage() {
                           <div className="flex gap-2"><input value={featureInput} onChange={e=>setFeatureInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();if(featureInput.trim()){setPlanForm(p=>({...p,features:[...(p.features||[]),featureInput.trim()]}));setFeatureInput('')}}}} placeholder="Add feature, press Enter" className={cn(iCls,'flex-1')} /><button onClick={()=>{if(featureInput.trim()){setPlanForm(p=>({...p,features:[...(p.features||[]),featureInput.trim()]}));setFeatureInput('')}}} className="px-3 py-2 bg-blue/10 border border-blue/20 text-blue-soft text-xs rounded-xl">Add</button></div>
                           {(planForm.features||[]).length>0 && <div className="flex flex-wrap gap-1.5">{planForm.features?.map((f,i)=><span key={i} className="flex items-center gap-1 text-xs bg-surface2 border border-border text-text-secondary px-2 py-1 rounded-lg">{f}<button onClick={()=>setPlanForm(p=>({...p,features:p.features?.filter((_,j)=>j!==i)}))}><X className="w-3 h-3" /></button></span>)}</div>}
                           <label className="flex items-center gap-2 text-xs text-text-secondary cursor-pointer"><input type="checkbox" checked={planForm.popular||false} onChange={e=>setPlanForm(p=>({...p,popular:e.target.checked}))} className="accent-blue" />Mark as Popular</label>
-                          <div className="flex gap-2"><button onClick={()=>setEditPlanId(null)} className="flex-1 py-2 text-sm text-text-muted border border-border rounded-xl">Cancel</button><button onClick={()=>{setPlans(p=>p.map(x=>x.id===editPlanId?{...x,...planForm} as Plan:x));setEditPlanId(null);toast.success('Plan updated')}} className="flex-1 py-2 text-sm font-medium bg-blue text-white rounded-xl flex items-center justify-center gap-1.5"><Check className="w-3.5 h-3.5" />Save</button></div>
+                          <div className="flex gap-2"><button onClick={()=>setEditPlanId(null)} className="flex-1 py-2 text-sm text-text-muted border border-border rounded-xl">Cancel</button><button onClick={()=>{const updated=plans.map(x=>x.id===editPlanId?{...x,...planForm} as Plan:x);setPlans(updated);savePlans(updated);setEditPlanId(null);toast.success('Plan updated')}} className="flex-1 py-2 text-sm font-medium bg-blue text-white rounded-xl flex items-center justify-center gap-1.5"><Check className="w-3.5 h-3.5" />Save</button></div>
                         </div>
                       ) : (
                         <div className="flex items-start gap-4 p-4">
@@ -429,7 +437,7 @@ export default function SettingsPage() {
                           </div>
                           <div className="flex items-center gap-1 flex-shrink-0">
                             <button onClick={()=>{setEditPlanId(plan.id);setPlanForm({...plan})}} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-surface2 text-text-muted hover:text-blue-soft"><Pencil className="w-3.5 h-3.5" /></button>
-                            <button onClick={()=>setPlans(p=>p.filter(x=>x.id!==plan.id))} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red/10 text-text-muted hover:text-red"><Trash2 className="w-3.5 h-3.5" /></button>
+                            <button onClick={()=>{const updated=plans.filter(x=>x.id!==plan.id);setPlans(updated);savePlans(updated)}} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red/10 text-text-muted hover:text-red"><Trash2 className="w-3.5 h-3.5" /></button>
                           </div>
                         </div>
                       )}
@@ -443,7 +451,7 @@ export default function SettingsPage() {
                         <select value={planForm.duration} onChange={e=>setPlanForm(p=>({...p,duration:e.target.value as any}))} className={iCls}><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="yearly">Yearly</option></select>
                       </div>
                       <div className="relative"><IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted" /><input type="number" value={planForm.price||''} onChange={e=>setPlanForm(p=>({...p,price:Number(e.target.value)}))} placeholder="Price *" className="w-full bg-surface2 border border-border rounded-xl pl-8 pr-3 py-2.5 text-sm text-text-primary outline-none focus:border-blue/40" /></div>
-                      <div className="flex gap-2"><button onClick={()=>setAddingPlan(false)} className="flex-1 py-2 text-sm text-text-muted border border-border rounded-xl">Cancel</button><button onClick={()=>{if(!planForm.name||!planForm.price){toast.error('Name & price required');return}setPlans(p=>[...p,{...planForm,id:Date.now().toString(),features:planForm.features||[]} as Plan]);setAddingPlan(false);toast.success('Plan added')}} className="flex-1 py-2 text-sm font-medium bg-blue text-white rounded-xl flex items-center justify-center gap-1.5"><Check className="w-3.5 h-3.5" />Add</button></div>
+                      <div className="flex gap-2"><button onClick={()=>setAddingPlan(false)} className="flex-1 py-2 text-sm text-text-muted border border-border rounded-xl">Cancel</button><button onClick={()=>{if(!planForm.name||!planForm.price){toast.error('Name & price required');return}const newPlan={...planForm,id:Date.now().toString(),features:planForm.features||[]} as Plan;const updated=[...plans,newPlan];setPlans(updated);savePlans(updated);setAddingPlan(false);toast.success('Plan added')}} className="flex-1 py-2 text-sm font-medium bg-blue text-white rounded-xl flex items-center justify-center gap-1.5"><Check className="w-3.5 h-3.5" />Add</button></div>
                     </div>
                   )}
                 </div>

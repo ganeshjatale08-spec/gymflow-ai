@@ -40,15 +40,22 @@ export async function POST(req: NextRequest) {
   const historyForAI = ((history || []).reverse() as { role: 'user' | 'assistant'; content: string }[])
     .filter(m => m.role === 'user' || m.role === 'assistant')
 
-  // Get AI persona from gym settings
+  // Get AI persona + plans from gym settings
   const { data: settings } = await supabase
     .from('gym_settings')
-    .select('ai_persona')
+    .select('ai_persona, plans_data')
     .limit(1)
     .maybeSingle()
 
-  const systemPrompt = settings?.ai_persona ||
-    'You are a helpful gym assistant. Reply in Hindi or English based on user language. Keep responses short and friendly.'
+  let plansText = ''
+  const plans = (settings?.plans_data as any[]) || []
+  if (plans.length > 0) {
+    plansText = '\nMEMBERSHIP PLANS:\n' + plans
+      .map((p: any) => `- ${p.name}: ₹${p.price?.toLocaleString('en-IN')}/${p.duration === 'monthly' ? 'month' : p.duration === 'quarterly' ? '3 months' : 'year'}`)
+      .join('\n')
+  }
+
+  const systemPrompt = (settings?.ai_persona || 'You are a helpful gym assistant. Reply in Hindi or English. Keep responses 2-4 lines only.') + plansText
 
   // Generate AI reply
   const aiReply = await generateAIResponse(systemPrompt, historyForAI, message)
