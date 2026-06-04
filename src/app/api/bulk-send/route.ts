@@ -20,18 +20,29 @@ export async function POST(req: NextRequest) {
   const supabase = db()
   const recipients: { phone: string; name: string }[] = []
 
-  // Get members
+  // Build recipient list based on audience
   if (audience === 'members' || audience === 'all') {
-    const { data: members } = await supabase
-      .from('members').select('phone, name').eq('status', 'active')
-    if (members) recipients.push(...members.map(m => ({ phone: m.phone, name: m.name })))
+    const { data } = await supabase.from('members').select('phone, name').eq('status', 'active')
+    if (data) recipients.push(...data.map((m: any) => ({ phone: m.phone, name: m.name })))
   }
 
-  // Get leads
-  if (audience === 'all') {
-    const { data: leads } = await supabase
-      .from('leads').select('phone, name').neq('status', 'lost')
-    if (leads) recipients.push(...leads.map(l => ({ phone: l.phone, name: l.name || l.phone })))
+  if (audience === 'leads' || audience === 'all') {
+    const { data } = await supabase.from('leads').select('phone, name').neq('status', 'lost')
+    if (data) recipients.push(...data.map((l: any) => ({ phone: l.phone, name: l.name || l.phone })))
+  }
+
+  if (audience === 'renewals') {
+    const today = new Date()
+    const week  = new Date(today.getTime() + 7*86400000)
+    const { data } = await supabase.from('members').select('phone, name, plan_end').eq('status', 'active')
+    if (data) recipients.push(...data
+      .filter((m: any) => new Date(m.plan_end) <= week && new Date(m.plan_end) >= today)
+      .map((m: any) => ({ phone: m.phone, name: m.name })))
+  }
+
+  if (audience === 'expired') {
+    const { data } = await supabase.from('members').select('phone, name').eq('status', 'expired')
+    if (data) recipients.push(...data.map((m: any) => ({ phone: m.phone, name: m.name })))
   }
 
   if (recipients.length === 0) {

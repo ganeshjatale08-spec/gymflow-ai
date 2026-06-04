@@ -6,7 +6,7 @@ import {
   Zap, Plus, Play, Pause, ArrowRight, Bell, MessageSquare,
   CreditCard, Users, Send, ChevronDown, ChevronUp,
   Target, CheckCircle2, X, FileText, Copy, Check,
-  Pencil, Trash2, Save,
+  Pencil, Trash2, Save, XCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { fadeUp, staggerContainer } from '@/lib/constants'
@@ -79,7 +79,20 @@ export default function AutomationsPage() {
 
   // Bulk message state
   const [message, setMessage]           = useState('')
-  const [audience, setAudience]         = useState<'members' | 'all'>('members')
+  const [audience, setAudience]         = useState<'members' | 'all' | 'renewals' | 'leads' | 'expired'>('members')
+  const [renewalCount, setRenewalCount] = useState(0)
+  const [expiredCount, setExpiredCount] = useState(0)
+
+  useEffect(() => {
+    fetch('/api/data/members').then(r=>r.json()).then(d=>{
+      if(Array.isArray(d)) {
+        const now = new Date()
+        const week = new Date(now.getTime() + 7*86400000)
+        setRenewalCount(d.filter((m:any)=>m.status==='active' && new Date(m.plan_end)<=week && new Date(m.plan_end)>=now).length)
+        setExpiredCount(d.filter((m:any)=>m.status==='expired').length)
+      }
+    })
+  }, [])
   const [sending, setSending]           = useState(false)
   const [sent, setSent]                 = useState(false)
   const [showVariables, setShowVariables] = useState(false)
@@ -137,7 +150,12 @@ export default function AutomationsPage() {
     setMessage(prev => prev + v)
   }
 
-  const recipientCount = audience === 'members' ? memberCount : memberCount + leadCount
+  const recipientCount =
+    audience === 'members'  ? memberCount :
+    audience === 'all'      ? memberCount + leadCount :
+    audience === 'renewals' ? renewalCount :
+    audience === 'leads'    ? leadCount :
+    audience === 'expired'  ? expiredCount : 0
 
   const previewText = message
     .replace(/{{name}}/g,     'Rahul Kumar')
@@ -216,64 +234,40 @@ export default function AutomationsPage() {
           {/* Audience selector */}
           <div>
             <label className="block text-xs text-text-muted mb-2">Send To</label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {([
-                {
-                  key: 'members',
-                  label: 'Gym Members Only',
-                  sub: 'Active members of your gym',
-                  count: memberCount,
-                  icon: Users,
-                  color: 'blue',
-                },
-                {
-                  key: 'all',
-                  label: 'All Contacts',
-                  sub: 'Members + all leads in database',
-                  count: memberCount + leadCount,
-                  icon: MessageSquare,
-                  color: 'green',
-                },
-              ] as const).map(({ key, label, sub, count, icon: Icon, color }) => (
-                <button
-                  key={key}
-                  onClick={() => setAudience(key)}
-                  className={cn(
-                    'flex flex-col items-start gap-1.5 p-4 rounded-xl border text-left transition-all',
-                    audience === key
-                      ? color === 'blue'
-                        ? 'bg-blue/10 border-blue/30'
-                        : 'bg-green/10 border-green/30'
-                      : 'bg-surface2 border-border hover:border-border'
-                  )}
-                >
+                { key:'members',  label:'Active Members',    sub:'Sab active gym members',           count:memberCount,              color:'blue',   icon:Users         },
+                { key:'all',      label:'All Contacts',      sub:'Members + leads sab ko',           count:memberCount+leadCount,    color:'green',  icon:MessageSquare },
+                { key:'renewals', label:'Renewals Due',      sub:'Is hafte expire hone wale',        count:renewalCount,             color:'orange', icon:Bell          },
+                { key:'leads',    label:'All Leads',         sub:'Sirf leads (enquiries)',            count:leadCount,                color:'violet', icon:Target        },
+                { key:'expired',  label:'Expired Members',   sub:'Membership expire ho chuki',       count:expiredCount,             color:'red',    icon:XCircle       },
+              ] as const).map(({ key, label, sub, count, color, icon: Icon }) => {
+                const colorMap: Record<string,{active:string;icon:string;check:string}> = {
+                  blue:   {active:'bg-blue/10 border-blue/30',   icon:'text-blue-soft',  check:'text-blue-soft'},
+                  green:  {active:'bg-green/10 border-green/30', icon:'text-green',      check:'text-green'},
+                  orange: {active:'bg-orange/10 border-orange/30',icon:'text-orange',    check:'text-orange'},
+                  violet: {active:'bg-purple/10 border-purple/30',icon:'text-purple',    check:'text-purple'},
+                  red:    {active:'bg-red/10 border-red/30',     icon:'text-red',        check:'text-red'},
+                }
+                const c = colorMap[color]
+                const isActive = audience === key
+                return (
+                <button key={key} onClick={() => setAudience(key as any)}
+                  className={cn('flex flex-col items-start gap-1.5 p-3 rounded-xl border text-left transition-all',
+                    isActive ? c.active : 'bg-surface2 border-border hover:border-border')}>
                   <div className="flex items-center justify-between w-full">
-                    <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center',
-                      audience === key
-                        ? color === 'blue' ? 'bg-blue/15 border border-blue/25' : 'bg-green/15 border border-green/25'
-                        : 'bg-surface border border-border'
-                    )}>
-                      <Icon className={cn('w-3.5 h-3.5', audience === key
-                        ? color === 'blue' ? 'text-blue-soft' : 'text-green'
-                        : 'text-text-muted'
-                      )} />
+                    <div className={cn('w-6 h-6 rounded-lg flex items-center justify-center bg-surface border border-border')}>
+                      <Icon className={cn('w-3 h-3', isActive ? c.icon : 'text-text-muted')} />
                     </div>
-                    {audience === key && (
-                      <CheckCircle2 className={cn('w-4 h-4', color === 'blue' ? 'text-blue-soft' : 'text-green')} />
-                    )}
+                    {isActive && <CheckCircle2 className={cn('w-3.5 h-3.5', c.check)} />}
                   </div>
                   <div>
-                    <div className={cn('text-sm font-semibold', audience === key
-                      ? color === 'blue' ? 'text-blue-soft' : 'text-green'
-                      : 'text-text-secondary'
-                    )}>
-                      {label}
-                    </div>
-                    <div className="text-[11px] text-text-muted mt-0.5">{sub}</div>
+                    <div className={cn('text-xs font-semibold', isActive ? c.icon : 'text-text-secondary')}>{label}</div>
+                    <div className="text-[10px] text-text-muted mt-0.5">{sub}</div>
                   </div>
-                  <div className="mt-1">
-                    <span className="text-xl font-bold text-text-primary">{count.toLocaleString('en-IN')}</span>
-                    <span className="text-xs text-text-muted ml-1">contacts</span>
+                  <div>
+                    <span className="text-base font-bold text-text-primary">{count}</span>
+                    <span className="text-[10px] text-text-muted ml-1">contacts</span>
                   </div>
                 </button>
               ))}
