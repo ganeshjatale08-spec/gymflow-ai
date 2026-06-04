@@ -37,15 +37,16 @@ export async function GET() {
     return NextResponse.json({ message: 'No pending payments', sent: 0 })
   }
 
-  // Get member phones
-  const memberIds = payments.filter(p => p.member_id).map(p => p.member_id)
-  const { data: members } = memberIds.length > 0
-    ? await supabase.from('members').select('id, phone, name').in('id', memberIds)
-    : { data: [] }
+  // Get all members for phone lookup
+  const { data: allMembers } = await supabase.from('members').select('id, phone, name')
 
   for (const payment of payments) {
-    // Find member phone
-    const member = (members || []).find((m: any) => m.id === payment.member_id)
+    // Find phone: try member_id first, then name match
+    const byId   = (allMembers || []).find((m: any) => m.id === payment.member_id)
+    const byName = (allMembers || []).find((m: any) =>
+      m.name?.toLowerCase().trim() === payment.member_name?.toLowerCase().trim()
+    )
+    const member = byId || byName
     const phone  = member?.phone
     if (!phone) { results.push({ name: payment.member_name, status: 'no_phone' }); continue }
 

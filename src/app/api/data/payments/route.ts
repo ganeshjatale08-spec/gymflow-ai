@@ -24,8 +24,19 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
+  const memberName = body.member || body.member_name || ''
+
+  // Auto-link member_id if name matches a member in DB
+  let memberId = body.member_id || null
+  if (!memberId && memberName) {
+    const { data: matchedMember } = await db()
+      .from('members').select('id').ilike('name', memberName).limit(1).maybeSingle()
+    if (matchedMember) memberId = matchedMember.id
+  }
+
   const payload = {
-    member_name:  body.member || body.member_name || '',
+    member_name:  memberName,
+    member_id:    memberId,
     amount:       body.amount,
     status:       body.status || 'completed',
     method:       body.method || null,
