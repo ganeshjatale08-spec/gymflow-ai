@@ -9,6 +9,7 @@ import {
 import { toast } from 'sonner'
 import { fadeUp, staggerContainer } from '@/lib/constants'
 import { cn } from '@/lib/utils'
+import { useUIStore } from '@/stores/uiStore'
 
 // ── Types ─────────────────────────────────────────────
 type Category = 'welcome' | 'renewal' | 'payment' | 'follow-up' | 'festival' | 'support'
@@ -95,13 +96,16 @@ function TemplateForm({
     setForm(prev => ({ ...prev, body: (prev.body || '') + v }))
   }
 
+  const gymNamePreview = typeof window !== 'undefined' ? (localStorage.getItem('gym_name') || 'My Gym') : 'My Gym'
+  const gymPhonePreview = typeof window !== 'undefined' ? (localStorage.getItem('gym_phone') || '') : ''
+
   const previewText = (form.body || '')
     .replace(/{{name}}/g,       'Rahul Kumar')
     .replace(/{{plan}}/g,       'Growth')
     .replace(/{{amount}}/g,     '₹3,999')
     .replace(/{{expiry}}/g,     '30 Jun 2026')
-    .replace(/{{gym_name}}/g,   'Iron Pulse Gym')
-    .replace(/{{phone}}/g,      '+91 98765 43210')
+    .replace(/{{gym_name}}/g,   gymNamePreview)
+    .replace(/{{phone}}/g,      gymPhonePreview || 'gym@upi')
     .replace(/{{trial_date}}/g, '5 Jun 2026')
 
   const inputCls = 'w-full bg-surface2 border border-border rounded-lg px-3 py-2 text-sm text-text-primary outline-none focus:border-blue/40 transition-colors placeholder-text-muted'
@@ -183,6 +187,7 @@ function TemplateForm({
 
 // ── Page ─────────────────────────────────────────────
 export default function TemplatesPage() {
+  const { gymName, phone } = useUIStore()
   const [templates, setTemplates]   = useState<Template[]>(defaultTemplates)
   const [search, setSearch]         = useState('')
   const [catFilter, setCatFilter]   = useState<Category | 'all'>('all')

@@ -335,7 +335,7 @@ export default function AutomationsPage() {
               value={message}
               onChange={e => setMessage(e.target.value)}
               rows={5}
-              placeholder={`Write your message here...\n\nExample:\nNamaste {{name}} ji 🙏\nYour {{plan}} membership at Iron Pulse Gym is expiring on {{expiry}}.\n\nRenew now and get 10% off! 💪`}
+              placeholder={`Write your message here...\n\nExample:\nNamaste {{name}} ji 🙏\nYour {{plan}} membership at {{gym_name}} is expiring on {{expiry}}.\n\nRenew now and get 10% off! 💪`}
               className="w-full bg-surface2 border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder-text-muted outline-none focus:border-blue/40 resize-none transition-colors leading-relaxed"
             />
             <div className="flex items-center justify-between mt-1.5">

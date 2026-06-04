@@ -1,11 +1,11 @@
 const brand = {
-  name: 'Iron Pulse Gym',
+  name: 'My Gym',
   tagline: 'AI-Powered Gym Management',
-  city: 'Mumbai',
-  phone: '+91 98765 43210',
+  city: '',
+  phone: '',
   logo: '⚡',
   primaryColor: '#3b82f6',
-  supportEmail: 'admin@ironpulsegym.com',
+  supportEmail: '',
 }
 
 export default brand
