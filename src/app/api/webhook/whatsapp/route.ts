@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { generateAIResponse } from '@/lib/openai'
 import { sendWhatsAppReply } from '@/lib/whatsapp'
 import { buildSystemPrompt } from '@/lib/buildPrompt'
+import { notifyStaff } from '@/lib/notifyStaff'
 
 function getSupabase() {
   return createClient(
@@ -92,7 +93,11 @@ export async function POST(req: NextRequest) {
           last_message: text,
         })
         if (leadErr) log.push(`Lead create error: ${leadErr.message}`)
-        else log.push(`New lead created: ${name}`)
+        else {
+          log.push(`New lead created: ${name}`)
+          // Notify staff about new lead
+          notifyStaff('new_lead', `🎯 New Lead!\n\nNaam: ${name}\nPhone: ${from}\nMessage: ${text.slice(0,80)}\n\nWebsite pe check karein.`).catch(()=>{})
+        }
       }
     } else {
       // Update last_message on existing lead

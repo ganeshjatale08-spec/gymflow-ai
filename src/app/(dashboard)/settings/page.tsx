@@ -152,6 +152,8 @@ export default function SettingsPage() {
 
   useEffect(() => {
     fetch('/api/data/employees').then(r=>r.json()).then(d=>{ if(Array.isArray(d)) setEmployees(d) })
+    // Load saved config
+    fetch('/api/data/notifications-config').then(r=>r.json()).then(d=>{ if(d && typeof d==='object') setNotifRecipients(d) })
   }, [])
 
   function toggleNotifRecipient(eventKey: string, empId: string) {
@@ -569,7 +571,10 @@ export default function SettingsPage() {
                 )}
 
                 {employees.length > 0 && (
-                  <button onClick={() => toast.success('Notification settings saved')}
+                  <button onClick={async()=>{
+                    await fetch('/api/data/notifications-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(notifRecipients)})
+                    toast.success('Notification settings saved')
+                  }}
                     className="flex items-center gap-2 bg-blue hover:bg-blue-muted text-white text-sm font-medium px-4 py-2 rounded-lg">
                     <Save className="w-3.5 h-3.5" />Save Notification Settings
                   </button>

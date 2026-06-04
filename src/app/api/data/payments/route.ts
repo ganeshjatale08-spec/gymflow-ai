@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { notifyStaff } from '@/lib/notifyStaff'
 
 function db() {
   return createClient(
@@ -37,6 +38,13 @@ export async function POST(req: NextRequest) {
   }
   const { data, error } = await db().from('payments').insert(payload).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Notify staff about payment
+  const amt = Number(payload.amount).toLocaleString('en-IN')
+  notifyStaff('payment_rcvd',
+    `💳 Payment Received!\n\nMember: ${payload.member_name}\nAmount: ₹${amt}\nMethod: ${payload.method || 'N/A'}\n\nWebsite pe check karein.`
+  ).catch(()=>{})
+
   return NextResponse.json({ ...data, member: data.member_name, upi_ref: data.utr_ref || null })
 }
 
