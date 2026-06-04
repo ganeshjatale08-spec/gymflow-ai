@@ -270,7 +270,8 @@ export default function AutomationsPage() {
                     <span className="text-[10px] text-text-muted ml-1">contacts</span>
                   </div>
                 </button>
-              ))}
+              )
+              })}
             </div>
           </div>
 
