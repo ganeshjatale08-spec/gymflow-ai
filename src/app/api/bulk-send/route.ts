@@ -57,9 +57,10 @@ export async function POST(req: NextRequest) {
   for (const recipient of unique) {
     try {
       // Personalize message
+      const { data: gymS } = await supabase.from('gym_settings').select('gym_name').limit(1).maybeSingle()
       const personalized = message
         .replace(/{{name}}/g,     recipient.name || 'Member')
-        .replace(/{{gym_name}}/g, process.env.GYM_NAME || 'Gym')
+        .replace(/{{gym_name}}/g, gymS?.gym_name || 'Gym')
 
       // 1. Send via WhatsApp
       await sendWhatsAppReply(recipient.phone, personalized)
@@ -103,7 +104,6 @@ export async function POST(req: NextRequest) {
       }
 
       sent++
-      await new Promise(r => setTimeout(r, 150)) // small delay
     } catch {
       failed++
     }
