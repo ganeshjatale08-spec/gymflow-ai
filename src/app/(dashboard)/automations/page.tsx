@@ -514,10 +514,11 @@ export default function AutomationsPage() {
       </motion.div>
 
       {/* ── Quick Actions ── */}
-      <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
-          { label: 'Send Renewal Reminders', sub: 'Members expiring this week ko WhatsApp bhejo', url: '/api/automations/renewals', color: 'border-orange/20 bg-orange/5', iconColor: 'text-orange', icon: Bell },
-          { label: 'Send Follow-up Messages', sub: 'Inactive leads ko follow-up bhejo',           url: '/api/automations/followup',  color: 'border-blue/20 bg-blue/5',   iconColor: 'text-blue-soft', icon: MessageSquare },
+          { label: 'Send Renewal Reminders',  sub: 'Members expiring this week ko WhatsApp bhejo', url: '/api/automations/renewals',    color: 'border-orange/20 bg-orange/5', iconColor: 'text-orange',    icon: Bell          },
+          { label: 'Send Payment Due Alerts', sub: 'Pending payment wale members ko remind karo', url: '/api/automations/payment-due', color: 'border-red/20 bg-red/5',      iconColor: 'text-red',       icon: CreditCard    },
+          { label: 'Send Follow-up Messages', sub: 'Inactive leads ko follow-up bhejo',           url: '/api/automations/followup',   color: 'border-blue/20 bg-blue/5',    iconColor: 'text-blue-soft', icon: MessageSquare },
         ].map(({ label, sub, url, color, iconColor, icon: Icon }) => {
           const [running, setRunning] = useState(false)
           const [result, setResult]   = useState<string | null>(null)
