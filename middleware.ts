@@ -10,10 +10,32 @@ const PROTECTED = [
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request })
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  const path = request.nextUrl.pathname
+  const isProtected = PROTECTED.some(p => path === p || path.startsWith(p + '/'))
+  const isRoot      = path === '/'
+
+  function toLogin() {
+    const u = request.nextUrl.clone()
+    u.pathname = '/login'
+    return NextResponse.redirect(u)
+  }
+  function toDash() {
+    const u = request.nextUrl.clone()
+    u.pathname = '/dashboard'
+    return NextResponse.redirect(u)
+  }
+
+  // If Supabase not configured, block everything protected
+  if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder')) {
+    if (isProtected || isRoot) return toLogin()
+    return response
+  }
+
+  try {
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
         getAll: () => request.cookies.getAll(),
         setAll: (cookiesToSet: { name: string; value: string; options: CookieOptions }[]) => {
@@ -24,25 +46,22 @@ export async function middleware(request: NextRequest) {
           )
         },
       },
-    }
-  )
+    })
 
-  const { data: { user } } = await supabase.auth.getUser()
-  const path = request.nextUrl.pathname
-  const isProtected = PROTECTED.some(p => path === p || path.startsWith(p + '/'))
+    const { data: { user } } = await supabase.auth.getUser()
 
-  // Redirect to login if not authenticated
-  if (isProtected && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
-  }
+    // Root → dashboard (logged in) or login
+    if (isRoot) return user ? toDash() : toLogin()
 
-  // Redirect to dashboard if already logged in
-  if ((path === '/login' || path === '/signup') && user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+    // Not logged in → redirect to login
+    if (isProtected && !user) return toLogin()
+
+    // Already logged in → skip login page
+    if ((path === '/login' || path === '/signup') && user) return toDash()
+
+  } catch {
+    // Auth check failed → fail closed (never allow protected pages)
+    if (isProtected || isRoot) return toLogin()
   }
 
   return response
