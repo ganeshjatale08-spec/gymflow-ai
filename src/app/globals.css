@@ -2,7 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Light mode — filter invert on main content ── */
+/* ── CSS Variables ── */
+:root {
+  --color-surface:        #0f0f12;
+  --color-border:         #242429;
+  --color-text-primary:   #f4f4f5;
+  --font-jakarta: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+/* ── Light mode ── */
 html.light #app-shell {
   filter: invert(1) hue-rotate(180deg);
 }
@@ -15,8 +23,8 @@ html.light #app-shell .recharts-wrapper {
 
 @layer base {
   * {
-    @apply border-border;
     box-sizing: border-box;
+    border-color: #242429;
   }
 
   html {
@@ -26,50 +34,45 @@ html.light #app-shell .recharts-wrapper {
 
   body {
     @apply bg-background text-text-primary antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
-    font-synthesis: none;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-variation-settings: normal;
     overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Better touch targets on mobile */
+  h1, h2, h3, h4, h5 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: #f4f4f5;
+  }
+
   button, a {
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Prevent horizontal scroll on mobile */
-  #__next, main {
-    max-width: 100vw;
-    overflow-x: hidden;
+  input, textarea, select {
+    font-family: var(--font-jakarta);
   }
 
-  ::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: #0a0a0a;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: #222222;
-    border-radius: 2px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: #333333;
-  }
+  ::-webkit-scrollbar        { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track  { background: transparent; }
+  ::-webkit-scrollbar-thumb  { background: #27272a; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
 
   ::selection {
-    background: rgba(59, 130, 246, 0.3);
-    color: #f8fafc;
+    background: rgba(59, 130, 246, 0.25);
+    color: #f4f4f5;
   }
 }
 
+/* ────────────────────────────────────────────────────────────
+   UTILITIES
+──────────────────────────────────────────────────────────── */
 @layer utilities {
   /* Gradient text */
   .gradient-text {
-    background: linear-gradient(135deg, #60a5fa 0%, #f8fafc 50%, #60a5fa 100%);
+    background: linear-gradient(135deg, #60a5fa 0%, #e2e8f0 50%, #60a5fa 100%);
     background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -78,181 +81,87 @@ html.light #app-shell .recharts-wrapper {
   }
 
   .gradient-text-static {
-    background: linear-gradient(135deg, #60a5fa 0%, #ffffff 60%);
+    background: linear-gradient(135deg, #60a5fa 0%, #f4f4f5 60%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  /* Glow effects */
-  .glow-blue {
-    box-shadow: 0 0 30px rgba(59, 130, 246, 0.2);
-  }
-
-  .glow-blue-strong {
-    box-shadow: 0 0 60px rgba(59, 130, 246, 0.4);
-  }
-
-  .glow-green {
-    box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
-  }
-
-  /* Noise texture overlay for matte effect */
-  .noise::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.4'/%3E%3C/svg%3E");
-    opacity: 0.03;
-    pointer-events: none;
-    border-radius: inherit;
-  }
-
-  /* Glass card effect */
+  /* Glass */
   .glass {
-    background: rgba(17, 17, 17, 0.8);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(15, 15, 18, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
   }
 
   /* Grid background */
   .grid-bg {
-    background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-    background-size: 40px 40px;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+    background-size: 36px 36px;
   }
 
-  /* Animated border */
-  .animated-border {
-    position: relative;
+  /* Dot grid */
+  .dot-grid {
+    background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+    background-size: 24px 24px;
   }
 
-  .animated-border::before {
-    content: '';
-    position: absolute;
-    inset: -1px;
-    border-radius: inherit;
-    background: linear-gradient(
-      135deg,
-      rgba(59, 130, 246, 0.5),
-      transparent,
-      rgba(59, 130, 246, 0.3)
-    );
-    z-index: -1;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
+  /* Status dots */
+  .status-active  { @apply bg-green w-2 h-2 rounded-full; box-shadow: 0 0 6px rgba(34,197,94,0.8); animation: pulseDot 2s ease-in-out infinite; }
+  .status-paused  { @apply bg-orange w-2 h-2 rounded-full; }
+  .status-offline { @apply bg-text-muted w-2 h-2 rounded-full; }
+  .status-error   { @apply bg-red w-2 h-2 rounded-full; box-shadow: 0 0 6px rgba(239,68,68,0.8); animation: pulseDot 1.5s ease-in-out infinite; }
 
-  .animated-border:hover::before {
-    opacity: 1;
-  }
-
-  /* Status indicators */
-  .status-active {
-    @apply bg-green w-2 h-2 rounded-full;
-    box-shadow: 0 0 6px rgba(34, 197, 94, 0.8);
-    animation: pulseDot 2s ease-in-out infinite;
-  }
-
-  .status-paused {
-    @apply bg-orange w-2 h-2 rounded-full;
-  }
-
-  .status-offline {
-    @apply bg-text-muted w-2 h-2 rounded-full;
-  }
-
-  .status-error {
-    @apply bg-red w-2 h-2 rounded-full;
-    box-shadow: 0 0 6px rgba(239, 68, 68, 0.8);
-    animation: pulseDot 1.5s ease-in-out infinite;
-  }
+  /* Glow effects */
+  .glow-blue       { box-shadow: 0 0 30px rgba(59,130,246,0.2); }
+  .glow-blue-strong{ box-shadow: 0 0 60px rgba(59,130,246,0.4); }
+  .glow-green      { box-shadow: 0 0 20px rgba(34,197,94,0.2); }
 }
 
-@keyframes shimmer {
-  0% { background-position: 0% center; }
-  100% { background-position: 200% center; }
-}
-
-@keyframes pulseDot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.8); }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-12px); }
-}
-
-@keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
-  50% { box-shadow: 0 0 50px rgba(59, 130, 246, 0.5); }
-}
-
-@keyframes typingDot {
-  0%, 60%, 100% { transform: translateY(0); }
-  30% { transform: translateY(-4px); }
-}
-
-@keyframes scrollX {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-
-/* WhatsApp chat bubble styles */
-.bubble-user {
-  @apply bg-surface2 text-text-primary rounded-2xl rounded-bl-sm px-4 py-2.5;
-  max-width: 70%;
-}
-
-.bubble-ai {
-  @apply rounded-2xl rounded-br-sm px-4 py-2.5;
-  background: rgba(59, 130, 246, 0.12);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  max-width: 70%;
-}
-
-/* ── 1. Sidebar nav item — glow active state ── */
+/* ────────────────────────────────────────────────────────────
+   SIDEBAR NAV ITEMS
+──────────────────────────────────────────────────────────── */
 .nav-item {
-  @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary text-sm font-medium cursor-pointer;
-  transition: all 0.18s ease;
+  @apply flex items-center gap-3 px-3 py-2 rounded-lg text-text-muted text-sm font-medium cursor-pointer;
+  transition: all 0.15s ease;
   position: relative;
+  letter-spacing: -0.01em;
 }
 
 .nav-item:hover {
-  @apply bg-surface2 text-text-primary;
-  box-shadow: inset 0 0 12px rgba(255,255,255,0.02);
+  @apply text-text-secondary;
+  background: rgba(255,255,255,0.04);
 }
 
 .nav-item.active {
-  color: #ffffff;
-  background: linear-gradient(90deg, rgba(59,130,246,0.18) 0%, rgba(59,130,246,0.06) 100%);
+  color: #e4e4e7;
+  background: linear-gradient(90deg, rgba(59,130,246,0.14) 0%, rgba(59,130,246,0.04) 100%);
   border-left: 2px solid #3b82f6;
-  box-shadow:
-    inset 0 0 24px rgba(59,130,246,0.08),
-    -2px 0 12px rgba(59,130,246,0.25);
+  padding-left: calc(0.75rem - 2px);
 }
 
-.nav-item.active::before {
+.nav-item.active::after {
   content: '';
   position: absolute;
-  right: 0;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  width: 3px;
-  height: 60%;
-  background: rgba(59,130,246,0.3);
-  border-radius: 2px 0 0 2px;
-  filter: blur(2px);
+  width: 4px;
+  height: 4px;
+  background: #3b82f6;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(59,130,246,0.8);
 }
 
-/* ── 2. KPI card — colored top accent + shimmer ── */
+/* ────────────────────────────────────────────────────────────
+   KPI CARDS
+──────────────────────────────────────────────────────────── */
 .kpi-card {
   @apply bg-surface rounded-xl border border-border p-5 relative overflow-hidden;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.04),
-    0 4px 24px rgba(0,0,0,0.5);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4), 0 4px 20px rgba(0,0,0,0.3);
   transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
@@ -261,94 +170,62 @@ html.light #app-shell .recharts-wrapper {
   position: absolute;
   inset-x: 0;
   top: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(59,130,246,0.6), transparent);
-  opacity: 0.7;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.07) 50%, transparent 100%);
 }
 
 .kpi-card:hover {
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.06),
-    0 8px 32px rgba(0,0,0,0.6),
-    0 0 0 1px rgba(59,130,246,0.12);
+  border-color: rgba(255,255,255,0.09);
+  box-shadow: 0 4px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(59,130,246,0.1);
   transform: translateY(-1px);
 }
 
-/* Shimmer sweep on hover */
-.kpi-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.03) 50%, transparent 70%);
-  background-size: 200% 100%;
-  background-position: -100% 0;
-  transition: background-position 0.5s ease;
-  pointer-events: none;
-}
-
-.kpi-card:hover::after {
-  background-position: 200% 0;
-}
-
-/* ── 3. Page headers — gradient accent ── */
+/* ────────────────────────────────────────────────────────────
+   PAGE HEADERS
+──────────────────────────────────────────────────────────── */
 .page-heading {
-  position: relative;
-  display: inline-block;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #f4f4f5;
 }
 
-.page-heading::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  width: 40px;
-  height: 2px;
-  background: linear-gradient(90deg, #3b82f6, transparent);
-  border-radius: 2px;
-}
-
-/* ── 4. Table rows — left accent on hover ── */
+/* ────────────────────────────────────────────────────────────
+   DATA TABLE
+──────────────────────────────────────────────────────────── */
 .data-table th {
-  @apply text-xs font-medium text-text-muted uppercase tracking-wider px-4 py-3 text-left;
-  border-bottom: 1px solid #222222;
-  background: rgba(255,255,255,0.01);
+  @apply text-2xs font-semibold text-text-muted uppercase tracking-widest px-4 py-3 text-left;
+  border-bottom: 1px solid #1e1e24;
+  background: rgba(255,255,255,0.012);
+  letter-spacing: 0.07em;
 }
 
 .data-table td {
   @apply px-4 py-3 text-sm text-text-secondary;
-  border-bottom: 1px solid #1a1a1a;
-  transition: background 0.12s ease, padding-left 0.12s ease;
-  position: relative;
-}
-
-.data-table tr {
-  position: relative;
-  transition: all 0.12s ease;
+  border-bottom: 1px solid #16161a;
+  transition: background 0.1s ease;
 }
 
 .data-table tr:hover td {
-  @apply bg-surface2;
+  background: rgba(255,255,255,0.025);
 }
 
 .data-table tr:hover td:first-child {
-  border-left: 2px solid rgba(59,130,246,0.5);
+  border-left: 2px solid rgba(59,130,246,0.45);
   padding-left: calc(1rem - 2px);
-  box-shadow: inset 2px 0 8px rgba(59,130,246,0.06);
 }
 
-/* ── 5. Primary button — inner glow ── */
+/* ────────────────────────────────────────────────────────────
+   BUTTONS
+──────────────────────────────────────────────────────────── */
 .btn-primary {
-  @apply bg-blue text-white font-medium rounded-lg transition-all;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.1) inset,
-    0 4px 12px rgba(59,130,246,0.3);
+  @apply bg-blue text-white font-semibold rounded-lg transition-all;
+  letter-spacing: -0.01em;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.1) inset, 0 3px 10px rgba(59,130,246,0.3);
 }
 
 .btn-primary:hover {
   @apply bg-blue-muted;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.12) inset,
-    0 6px 20px rgba(59,130,246,0.45);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.12) inset, 0 6px 20px rgba(59,130,246,0.4);
   transform: translateY(-1px);
 }
 
@@ -357,40 +234,83 @@ html.light #app-shell .recharts-wrapper {
   box-shadow: 0 1px 0 rgba(255,255,255,0.08) inset, 0 2px 6px rgba(59,130,246,0.2);
 }
 
-/* ── 6. Smooth scrollbar ── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #333; }
-
-/* ── Surface card hover shimmer ── */
+/* ────────────────────────────────────────────────────────────
+   SURFACE CARDS
+──────────────────────────────────────────────────────────── */
 .surface-card {
   @apply bg-surface border border-border rounded-xl relative overflow-hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.surface-card:hover {
-  border-color: rgba(255,255,255,0.08);
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 8px 24px rgba(0,0,0,0.4);
+
+.surface-card::before {
+  content: '';
+  position: absolute;
+  inset-x: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
+  pointer-events: none;
 }
 
-/* ── Focus ring ── */
+.surface-card:hover {
+  border-color: rgba(255,255,255,0.07);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+/* ────────────────────────────────────────────────────────────
+   INPUT / TEXTAREA / SELECT
+──────────────────────────────────────────────────────────── */
 input:focus, textarea:focus, select:focus {
   outline: none;
 }
 
-/* Recharts overrides */
+input::placeholder, textarea::placeholder {
+  color: #3f3f46;
+}
+
+/* ────────────────────────────────────────────────────────────
+   CHAT BUBBLES
+──────────────────────────────────────────────────────────── */
+.bubble-user {
+  @apply bg-surface2 text-text-primary rounded-2xl rounded-bl-sm px-4 py-2.5;
+  max-width: 70%;
+}
+
+.bubble-ai {
+  @apply rounded-2xl rounded-br-sm px-4 py-2.5;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  max-width: 70%;
+}
+
+/* ────────────────────────────────────────────────────────────
+   RECHARTS
+──────────────────────────────────────────────────────────── */
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line {
   stroke: rgba(255, 255, 255, 0.04) !important;
 }
 
 .recharts-text {
-  fill: #475569 !important;
+  fill: #52525b !important;
   font-size: 11px !important;
+  font-family: var(--font-jakarta) !important;
 }
 
 .recharts-tooltip-wrapper .recharts-default-tooltip {
-  background: #111111 !important;
-  border: 1px solid #222222 !important;
-  border-radius: 8px !important;
+  background: #0f0f12 !important;
+  border: 1px solid #242429 !important;
+  border-radius: 10px !important;
 }
+
+/* ────────────────────────────────────────────────────────────
+   ANIMATIONS
+──────────────────────────────────────────────────────────── */
+@keyframes shimmer    { 0% { background-position: 0% center; } 100% { background-position: 200% center; } }
+@keyframes pulseDot   { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
+@keyframes float      { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-12px); } }
+@keyframes pulseGlow  { 0%, 100% { box-shadow: 0 0 20px rgba(59,130,246,0.2); } 50% { box-shadow: 0 0 50px rgba(59,130,246,0.5); } }
+@keyframes typingDot  { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }
+@keyframes scrollX    { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes fadeIn     { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }

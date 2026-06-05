@@ -1,9 +1,21 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
 import { Toaster } from 'sonner'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-jakarta',
+  weight: ['300', '400', '500', '600', '700', '800'],
+  display: 'swap',
+})
+
+const mono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  weight: ['400', '500'],
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'GymFlow AI — WhatsApp AI Platform for Gyms',
@@ -13,7 +25,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} font-sans bg-background text-text-primary antialiased`}>
+      <body className={`${jakarta.variable} ${mono.variable} font-sans bg-background text-text-primary antialiased`}>
         {children}
         <Toaster
           position="top-right"
@@ -22,6 +34,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               background: 'var(--color-surface)',
               border: '1px solid var(--color-border)',
               color: 'var(--color-text-primary)',
+              fontFamily: 'var(--font-jakarta)',
+              fontSize: '13px',
+              borderRadius: '10px',
             },
           }}
         />
